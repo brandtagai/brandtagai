@@ -1,5 +1,4 @@
 import React from "react";
-import { motion } from "framer-motion";
 
 export default function ProcessingScreen({ progress = 0 }) {
   // SVG paths for a stylized fingerprint
@@ -11,28 +10,113 @@ export default function ProcessingScreen({ progress = 0 }) {
     "M 50 38 A 12 12 0 0 1 50 62",
     "M 50 44 A 6 6 0 1 1 49.99 44",
   ];
-
+  
   // Calculate circumference for progress bar
   const radius = 145;
   const circumference = 2 * Math.PI * radius;
   const progressOffset = circumference - (progress / 100) * circumference;
-
+  
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center overflow-hidden">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        transition={{ duration: 0.5, ease: "easeInOut" }}
-        className="relative w-[300px] h-[300px] md:w-[400px] md:h-[400px]"
-      >
+      <style>{`
+        @keyframes fadeScaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        @keyframes pulseGlow {
+          0%, 100% {
+            transform: scale(1);
+            opacity: 0.7;
+          }
+          50% {
+            transform: scale(1.05);
+            opacity: 1;
+          }
+        }
+        
+        @keyframes progressStroke {
+          from {
+            stroke-dashoffset: ${circumference};
+          }
+          to {
+            stroke-dashoffset: ${progressOffset};
+          }
+        }
+        
+        @keyframes fingerprintFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 0.6;
+          }
+        }
+        
+        @keyframes drawPath {
+          from {
+            stroke-dashoffset: 100;
+          }
+          to {
+            stroke-dashoffset: 0;
+          }
+        }
+        
+        @keyframes scanLine {
+          0%, 100% {
+            top: 20%;
+          }
+          50% {
+            top: 80%;
+          }
+        }
+        
+        .container {
+          animation: fadeScaleIn 0.5s ease-in-out;
+        }
+        
+        .pulse-glow {
+          animation: pulseGlow 2s ease-in-out infinite;
+        }
+        
+        .progress-circle {
+          stroke-dasharray: ${circumference};
+          stroke-dashoffset: ${circumference};
+          animation: progressStroke 0.5s ease-out 0s forwards;
+        }
+        
+        .fingerprint-svg {
+          animation: fingerprintFadeIn 1s ease-in-out 0.3s forwards;
+          opacity: 0;
+        }
+        
+        .fingerprint-path {
+          stroke-dasharray: 100;
+          stroke-dashoffset: 100;
+        }
+        
+        .fingerprint-path:nth-child(1) { animation: drawPath 1s ease-in-out 0.5s forwards; }
+        .fingerprint-path:nth-child(2) { animation: drawPath 1s ease-in-out 0.6s forwards; }
+        .fingerprint-path:nth-child(3) { animation: drawPath 1s ease-in-out 0.7s forwards; }
+        .fingerprint-path:nth-child(4) { animation: drawPath 1s ease-in-out 0.8s forwards; }
+        .fingerprint-path:nth-child(5) { animation: drawPath 1s ease-in-out 0.9s forwards; }
+        .fingerprint-path:nth-child(6) { animation: drawPath 1s ease-in-out 1.0s forwards; }
+        
+        .scan-line {
+          animation: scanLine 2s ease-in-out infinite;
+        }
+      `}</style>
+      
+      <div className="container relative w-[300px] h-[300px] md:w-[400px] md:h-[400px]">
         {/* Pulsing background glow */}
-        <motion.div
-          animate={{ scale: [1, 1.05, 1], opacity: [0.7, 1, 0.7] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute inset-0 bg-cyan-500/30 rounded-full blur-2xl"
-        />
-
+        <div className="pulse-glow absolute inset-0 bg-cyan-500/30 rounded-full blur-2xl" />
+        
         {/* Circular Progress Bar */}
         <div className="absolute inset-0 flex items-center justify-center">
           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 300 300">
@@ -44,7 +128,7 @@ export default function ProcessingScreen({ progress = 0 }) {
               strokeWidth="4"
               fill="none"
             />
-            <motion.circle
+            <circle
               cx="150"
               cy="150"
               r={radius}
@@ -52,10 +136,7 @@ export default function ProcessingScreen({ progress = 0 }) {
               strokeWidth="4"
               fill="none"
               strokeLinecap="round"
-              strokeDasharray={circumference}
-              initial={{ strokeDashoffset: circumference }}
-              animate={{ strokeDashoffset: progressOffset }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="progress-circle"
             />
             <defs>
               <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -65,44 +146,30 @@ export default function ProcessingScreen({ progress = 0 }) {
             </defs>
           </svg>
         </div>
-
+        
         {/* Fingerprint SVG Container with circular clip mask */}
         <div className="absolute inset-4 rounded-full overflow-hidden flex items-center justify-center">
-          <motion.svg
-            className="w-full h-full text-cyan-400"
+          <svg
+            className="fingerprint-svg w-full h-full text-cyan-400"
             viewBox="10 10 80 80"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.6 }}
-            transition={{ delay: 0.3, duration: 1 }}
           >
             {fingerprintPaths.map((path, i) => (
-              <motion.path
+              <path
                 key={i}
                 d={path}
                 stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
                 fill="none"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{
-                  delay: 0.5 + i * 0.1,
-                  duration: 1,
-                  ease: "easeInOut",
-                }}
+                className="fingerprint-path"
               />
             ))}
-          </motion.svg>
+          </svg>
         </div>
-
+        
         {/* Scanning Line Animation */}
-        <motion.div 
-            className="absolute left-4 right-4 h-1 bg-cyan-300/80 blur-sm shadow-xl shadow-cyan-300 rounded-full"
-            style={{ top: '50%' }}
-            animate={{ top: ['20%', '80%', '20%'] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      </motion.div>
+        <div className="scan-line absolute left-4 right-4 h-1 bg-cyan-300/80 blur-sm shadow-xl shadow-cyan-300 rounded-full" />
+      </div>
     </div>
   );
 }
