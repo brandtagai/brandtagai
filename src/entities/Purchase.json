@@ -1,0 +1,51 @@
+{
+  "name": "Purchase",
+  "type": "object",
+  "properties": {
+    "product_id": {
+      "type": "string",
+      "enum": [
+        "brandtag_single",
+        "brandtag_bundle_20"
+      ]
+    },
+    "amount": {
+      "type": "number"
+    },
+    "images_remaining": {
+      "type": "number",
+      "default": 0
+    },
+    "purchase_date": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
