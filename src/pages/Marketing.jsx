@@ -77,7 +77,6 @@ export default function Marketing() {
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white overflow-hidden flex flex-col">
-      {/* Skip Button */}
       <div className="flex justify-end p-6">
         <Button
           variant="ghost"
@@ -88,7 +87,6 @@ export default function Marketing() {
         </Button>
       </div>
 
-      {/* Content - Full Screen */}
       <div className="flex-1 px-6 flex flex-col justify-center">
         <AnimatePresence mode="wait">
           <motion.div
@@ -105,7 +103,6 @@ export default function Marketing() {
               
               return (
                 <div className="space-y-8">
-                  {/* Icon */}
                   <motion.div
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -117,7 +114,6 @@ export default function Marketing() {
                     </div>
                   </motion.div>
 
-                  {/* Title & Subtitle */}
                   <motion.div
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -130,7 +126,6 @@ export default function Marketing() {
                     </p>
                   </motion.div>
 
-                  {/* Features */}
                   <motion.div
                     initial={{ y: 30, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -141,48 +136,4 @@ export default function Marketing() {
                       <motion.div
                         key={feature}
                         initial={{ x: -20, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.5 + index * 0.1 }}
-                        className="flex items-center gap-3 justify-center"
-                      >
-                        <CheckCircle className="w-5 h-5 text-cyan-400" />
-                        <span className="text-gray-200">{feature}</span>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </div>
-              );
-            })()}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="p-6 space-y-4">
-        <Button
-          onClick={nextScreen}
-          className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl shadow-lg"
-          size="lg"
-        >
-          {currentScreen === marketingScreens.length - 1 ? (
-            "Get Started"
-          ) : (
-            <>
-              Continue <ArrowRight className="w-5 h-5 ml-2" />
-            </>
-          )}
-        </Button>
-        
-        <div className="flex justify-center">
-          <Button
-            variant="ghost" 
-            onClick={skipToPaywall}
-            className="text-gray-400 hover:text-white"
-          >
-            Skip Introduction
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+                        an
