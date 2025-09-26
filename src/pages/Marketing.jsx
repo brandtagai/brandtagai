@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { brandUtils } from "../brandtagai.js";
 import { 
   Shield, 
   Zap, 
@@ -22,6 +21,9 @@ const Button = ({ children, onClick, className = "", variant, size, ...props }) 
     {children}
   </button>
 );
+
+// Simple page URL function
+const createPageUrl = (pageName) => `/${pageName.toLowerCase()}`;
 
 const marketingScreens = [
   {
@@ -76,12 +78,12 @@ export default function Marketing() {
     if (currentScreen < marketingScreens.length - 1) {
       setCurrentScreen(currentScreen + 1);
     } else {
-      navigate(brandUtils.createPageUrl("Paywall"));
+      navigate(createPageUrl("Paywall"));
     }
   };
 
   const skipToPaywall = () => {
-    navigate(brandUtils.createPageUrl("Paywall"));
+    navigate(createPageUrl("Paywall"));
   };
 
   return (
