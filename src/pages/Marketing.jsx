@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Button } from "../components/ui/button";
+import { Card } from "../components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { createPageUrl } from "@/utils";
+import { brandUtils } from "../brandtagai.js";
 import { 
   Shield, 
   Zap, 
@@ -67,12 +67,12 @@ export default function Marketing() {
     if (currentScreen < marketingScreens.length - 1) {
       setCurrentScreen(currentScreen + 1);
     } else {
-      navigate(createPageUrl("Paywall"));
+      navigate(brandUtils.createPageUrl("Paywall"));
     }
   };
 
   const skipToPaywall = () => {
-    navigate(createPageUrl("Paywall"));
+    navigate(brandUtils.createPageUrl("Paywall"));
   };
 
   return (
