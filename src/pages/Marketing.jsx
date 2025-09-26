@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { Button } from "../components/ui/button";
-import { Card } from "../components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { brandUtils } from "../brandtagai.js";
 import { 
@@ -13,6 +11,17 @@ import {
   Globe
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Simple Button component
+const Button = ({ children, onClick, className = "", variant, size, ...props }) => (
+  <button 
+    onClick={onClick} 
+    className={`px-4 py-2 rounded transition-colors ${className}`}
+    {...props}
+  >
+    {children}
+  </button>
+);
 
 const marketingScreens = [
   {
@@ -79,9 +88,8 @@ export default function Marketing() {
     <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white overflow-hidden flex flex-col">
       <div className="flex justify-end p-6">
         <Button
-          variant="ghost"
           onClick={skipToPaywall}
-          className="text-cyan-300 hover:text-white"
+          className="text-cyan-300 hover:text-white bg-transparent"
         >
           Skip
         </Button>
@@ -156,7 +164,6 @@ export default function Marketing() {
         <Button
           onClick={nextScreen}
           className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl shadow-lg"
-          size="lg"
         >
           {currentScreen === marketingScreens.length - 1 ? (
             "Get Started"
@@ -169,9 +176,8 @@ export default function Marketing() {
         
         <div className="flex justify-center">
           <Button
-            variant="ghost" 
             onClick={skipToPaywall}
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white bg-transparent"
           >
             Skip Introduction
           </Button>
