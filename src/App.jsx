@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import BottomNav from './components/navigation/BottomNav';
-
 // Import your pages
 import Marketing from './pages/Marketing';
 import Paywall from './pages/Paywall';
