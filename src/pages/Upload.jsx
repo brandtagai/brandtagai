@@ -1,334 +1,145 @@
-import React, { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { UserSettings } from "@/entities/UserSettings";
-import { Purchase } from "@/entities/Purchase";
-import { User } from "@/entities/User";
-import { processImage } from "../components/utils/ImageProcessor";
-import { Upload as UploadIcon, Image, Download, Zap, Settings } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
-import { createPageUrl } from "@/utils";
-import BottomNav from "../components/navigation/BottomNav";
-import ProcessingScreen from "../components/upload/ProcessingScreen";
+import React, { useState, useRef } from 'react';
 
-export default function Upload() {
-  const [files, setFiles] = useState([]);
+const Upload = () => {
+  const [uploadedImages, setUploadedImages] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processedImages, setProcessedImages] = useState([]);
-  const [settings, setSettings] = useState(null);
-  const [remainingCredits, setRemainingCredits] = useState(0);
-  const [dragActive, setDragActive] = useState(false);
-  const [processingProgress, setProcessingProgress] = useState({ progress: 0, status: "" });
+  const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
-    try {
-      const user = await User.me();
-      
-      // Load settings
-      const userSettings = await UserSettings.filter({ created_by: user.email }, '-created_date', 1);
-      if (userSettings.length > 0) {
-        setSettings(userSettings[0]);
-      }
-      
-      // Load credits
-      const purchases = await Purchase.filter({ created_by: user.email }, '-purchase_date');
-      const totalCredits = purchases.reduce((sum, p) => sum + (p.images_remaining || 0), 0);
-      setRemainingCredits(totalCredits);
-    } catch (error) {
-      console.error("Error loading user data:", error);
-    }
-  };
-
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+  const handleFileUpload = (event) => {
+    const files = Array.from(event.target.files);
     
-    const droppedFiles = Array.from(e.dataTransfer.files).filter(file =>
-      file.type.startsWith('image/')
-    );
-    addFiles(droppedFiles);
-  };
-
-  const handleFileSelect = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    addFiles(selectedFiles);
-  };
-
-  const addFiles = (newFiles) => {
-    const maxFiles = Math.min(newFiles.length, remainingCredits, 20);
-    setFiles(prev => [...prev, ...newFiles.slice(0, maxFiles)]);
-  };
-
-  const removeFile = (index) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    files.forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setUploadedImages(prev => [...prev, {
+            id: Date.now() + Math.random(),
+            name: file.name,
+            url: e.target.result,
+            status: 'ready'
+          }]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
   };
 
   const processImages = async () => {
-    if (files.length === 0) return;
-    
-    // Check if user has branding set up
-    if (!settings || (!settings.logo_url && !settings.brand_text)) {
-      alert("Please set up your branding (logo or text) in Settings before processing images.");
-      return;
-    }
-    
     setIsProcessing(true);
-    const results = [];
     
-    for (let i = 0; i < files.length; i++) {
-      try {
-        setProcessingProgress({ 
-          progress: 0, 
-          status: `Processing ${files[i].name} (${i + 1}/${files.length})...` 
-        });
-        
-        const result = await processImage(
-          files[i], 
-          settings,
-          (progress, status) => {
-            setProcessingProgress({ progress, status });
-          }
-        );
-        
-        results.push(result);
-        
-        // Update credits
-        await updateCredits();
-      } catch (error) {
-        console.error(`Error processing ${files[i].name}:`, error);
-      }
+    // Simulate processing
+    for (let i = 0; i < uploadedImages.length; i++) {
+      setUploadedImages(prev => 
+        prev.map((img, index) => 
+          index === i ? { ...img, status: 'processing' } : img
+        )
+      );
+      
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setUploadedImages(prev => 
+        prev.map((img, index) => 
+          index === i ? { ...img, status: 'complete' } : img
+        )
+      );
     }
     
-    setProcessedImages(results);
-    setFiles([]);
     setIsProcessing(false);
   };
 
-  const updateCredits = async () => {
-    try {
-      const user = await User.me();
-      const purchases = await Purchase.filter({ created_by: user.email }, '-purchase_date', 1);
-      
-      if (purchases.length > 0 && purchases[0].images_remaining > 0) {
-        await Purchase.update(purchases[0].id, {
-          images_remaining: purchases[0].images_remaining - 1
-        });
-        setRemainingCredits(prev => prev - 1);
-      }
-    } catch (error) {
-      console.error("Error updating credits:", error);
-    }
+  const removeImage = (id) => {
+    setUploadedImages(prev => prev.filter(img => img.id !== id));
   };
-
-  const downloadImage = (image) => {
-    const link = document.createElement('a');
-    link.href = image.processedImage;
-    link.download = image.filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const downloadAll = () => {
-    processedImages.forEach(downloadImage);
-    setProcessedImages([]);
-  };
-
-  if (isProcessing) {
-    return <ProcessingScreen 
-      files={files} 
-      settings={settings} 
-      progress={processingProgress.progress}
-      status={processingProgress.status}
-    />;
-  }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white flex flex-col">
-      {/* Header */}
-      <div className="bg-slate-900/50 backdrop-blur-lg border-b border-white/20">
-        <div className="px-6 py-4">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-3"
-          >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
-              <Image className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h1 className="text-xl font-bold text-white">Process Images</h1>
-              <p className="text-sm text-blue-200">Client-side watermarking and protection</p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-cyan-400">{remainingCredits}</div>
-              <div className="text-xs text-white/70 -mt-1">Credits</div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-
-      <div className="flex-1 px-6 py-2 flex flex-col justify-center space-y-4">
-        {/* Setup Check */}
-        {settings && !settings.logo_url && !settings.brand_text && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-4"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-yellow-300 font-semibold">Setup Required</h3>
-                <p className="text-yellow-200 text-sm">Add your logo or brand text in Settings</p>
-              </div>
-              <Link to={createPageUrl("Settings")}>
-                <Button variant="outline" size="sm" className="border-yellow-500/50 text-yellow-300">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Settings
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Title */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-center"
-        >
-          <h2 className="text-2xl font-bold mb-1">Client-Side Processing</h2>
-          <p className="text-base text-cyan-200">No uploads - everything happens in your browser</p>
-        </motion.div>
-
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white pb-20">
+      <div className="p-6">
+        <h1 className="text-3xl font-bold mb-8 text-center">Upload Images</h1>
+        
         {/* Upload Area */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex-1 max-h-72"
-        >
+        <div className="max-w-md mx-auto mb-8">
           <div
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            className={`h-full border-2 border-dashed rounded-xl p-6 text-center transition-colors flex flex-col items-center justify-center ${
-              dragActive
-                ? "border-cyan-400 bg-cyan-400/10"
-                : "border-white/30 hover:border-cyan-400 hover:bg-cyan-400/5"
-            }`}
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed border-cyan-500 rounded-xl p-8 text-center cursor-pointer hover:bg-cyan-500/10 transition-colors"
           >
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-              id="file-upload"
-            />
-            
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="w-14 h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 p-3 shadow-2xl mb-4"
-            >
-              <UploadIcon className="w-full h-full text-white" />
-            </motion.div>
-
-            <h3 className="text-lg font-semibold text-white mb-2">Select Your Images</h3>
-            <p className="text-gray-300 mb-1">
-              All formats supported: JPG, PNG, WebP, GIF, BMP
-            </p>
-            <p className="text-sm text-gray-400 mb-4">
-              Processing happens locally in your browser
-            </p>
-            
-            <Button
-              onClick={() => document.getElementById('file-upload').click()}
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg"
-            >
-              Choose Images
-            </Button>
+            <div className="mb-4">
+              <svg className="w-16 h-16 mx-auto text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Drop images here</h3>
+            <p className="text-gray-400">or click to browse</p>
           </div>
-        </motion.div>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+        </div>
 
-        {/* Selected Files */}
-        <AnimatePresence>
-          {files.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-white/5 backdrop-blur-md rounded-xl p-3"
-            >
-              <div className="text-center mb-2">
-                <span className="text-sm font-medium text-white">
-                  {files.length} image{files.length > 1 ? 's' : ''} selected
-                </span>
-              </div>
-              
-              <Button
-                onClick={processImages}
-                disabled={files.length === 0 || remainingCredits === 0 || (!settings?.logo_url && !settings?.brand_text)}
-                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-3 rounded-xl shadow-lg"
-                size="lg"
-              >
-                <Zap className="w-4 h-4 mr-2" />
-                Process {files.length} Image{files.length > 1 ? 's' : ''}
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Image Preview */}
+        {uploadedImages.length > 0 && (
+          <div className="max-w-md mx-auto">
+            <h3 className="text-lg font-semibold mb-4">Selected Images</h3>
+            <div className="space-y-4 mb-6">
+              {uploadedImages.map((image) => (
+                <div key={image.id} className="bg-slate-800/50 rounded-xl p-4">
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={image.url}
+                      alt={image.name}
+                      className="w-16 h-16 object-cover rounded-lg"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium truncate">{image.name}</p>
+                      <div className="flex items-center space-x-2 mt-1">
+                        {image.status === 'ready' && (
+                          <span className="text-sm text-gray-400">Ready</span>
+                        )}
+                        {image.status === 'processing' && (
+                          <>
+                            <div className="w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span className="text-sm text-cyan-400">Processing...</span>
+                          </>
+                        )}
+                        {image.status === 'complete' && (
+                          <>
+                            <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                            <span className="text-sm text-green-400">Complete</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeImage(image.id)}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-        {/* Processed Results */}
-        <AnimatePresence>
-          {processedImages.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="bg-green-500/10 backdrop-blur-md rounded-xl p-3"
+            {/* Process Button */}
+            <button
+              onClick={processImages}
+              disabled={isProcessing || uploadedImages.every(img => img.status === 'complete')}
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <div className="text-center mb-2">
-                <span className="text-sm font-medium text-green-300">
-                  ✨ {processedImages.length} image{processedImages.length > 1 ? 's' : ''} processed
-                </span>
-              </div>
-              
-              <Button
-                onClick={downloadAll}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
-                size="lg"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download All
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              {isProcessing ? 'Processing Images...' : 'Add Watermarks'}
+            </button>
+          </div>
+        )}
       </div>
-
-      <BottomNav />
     </div>
   );
-}
+};
+
+export default Upload;
