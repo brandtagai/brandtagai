@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation, Link } from 'react-router-dom';
+// Import your page components
+import Settings from './pages/Settings';
+import Upload from './pages/Upload';
+import Metadata from './pages/Metadata';
 
-// Your real Layout component
+// Utility function
 const createPageUrl = (pageName) => {
   return `/${pageName.toLowerCase()}`;
 };
 
-const Layout = ({ children, currentPageName }) => {
+// Layout component
+const Layout = ({ children }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <style>{`
@@ -73,6 +78,7 @@ const Shield2 = ({ className }) => (
   </svg>
 );
 
+// Button component
 const Button = ({ children, onClick, className = "", disabled = false }) => (
   <button 
     onClick={onClick} 
@@ -83,7 +89,7 @@ const Button = ({ children, onClick, className = "", disabled = false }) => (
   </button>
 );
 
-// Marketing Screen Data
+// Marketing screen data
 const marketingScreens = [
   {
     id: 1,
@@ -91,12 +97,7 @@ const marketingScreens = [
     subtitle: "Protect your brand with invisible precision",
     description: "Add your logo and business name to images with intelligent positioning that adapts to any photo composition.",
     icon: Shield,
-    features: [
-      "Smart logo positioning",
-      "Brand name overlay", 
-      "Batch processing",
-      "Professional quality"
-    ],
+    features: ["Smart logo positioning", "Brand name overlay", "Batch processing", "Professional quality"],
     gradient: "from-blue-600 to-cyan-500"
   },
   {
@@ -105,12 +106,7 @@ const marketingScreens = [
     subtitle: "Copyright protection that can't be removed",
     description: "Embed invisible metadata directly into your images for permanent copyright protection and ownership verification.",
     icon: Eye,
-    features: [
-      "Invisible embedding",
-      "Copyright protection",
-      "Ownership verification", 
-      "Third-party validation"
-    ],
+    features: ["Invisible embedding", "Copyright protection", "Ownership verification", "Third-party validation"],
     gradient: "from-purple-600 to-blue-500"
   },
   {
@@ -119,17 +115,12 @@ const marketingScreens = [
     subtitle: "Optimized for every platform",
     description: "Automatic crop detection ensures your watermarks stay visible across all social media platforms.",
     icon: Globe,
-    features: [
-      "Auto-crop detection",
-      "Platform optimization",
-      "Visibility guaranteed",
-      "One-click processing"
-    ],
+    features: ["Auto-crop detection", "Platform optimization", "Visibility guaranteed", "One-click processing"],
     gradient: "from-cyan-500 to-emerald-500"
   }
 ];
 
-// MARKETING COMPONENT
+// Marketing Component
 const Marketing = () => {
   const [currentScreen, setCurrentScreen] = useState(0);
   const navigate = useNavigate();
@@ -152,10 +143,7 @@ const Marketing = () => {
   return (
     <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white overflow-hidden flex flex-col">
       <div className="flex justify-end p-6">
-        <Button
-          onClick={skipToPaywall}
-          className="text-cyan-300 hover:text-white bg-transparent"
-        >
+        <Button onClick={skipToPaywall} className="text-cyan-300 hover:text-white bg-transparent">
           Skip
         </Button>
       </div>
@@ -172,13 +160,11 @@ const Marketing = () => {
             <div>
               <h1 className="text-3xl font-bold mb-3">{screen.title}</h1>
               <p className="text-lg text-cyan-200 mb-6">{screen.subtitle}</p>
-              <p className="text-gray-300 leading-relaxed max-w-sm mx-auto">
-                {screen.description}
-              </p>
+              <p className="text-gray-300 leading-relaxed max-w-sm mx-auto">{screen.description}</p>
             </div>
 
             <div className="space-y-3">
-              {screen.features.map((feature, index) => (
+              {screen.features.map((feature) => (
                 <div key={feature} className="flex items-center gap-3 justify-center">
                   <CheckCircle className="w-5 h-5 text-cyan-400" />
                   <span className="text-gray-200">{feature}</span>
@@ -204,10 +190,7 @@ const Marketing = () => {
         </Button>
         
         <div className="flex justify-center">
-          <Button
-            onClick={skipToPaywall}
-            className="text-gray-400 hover:text-white bg-transparent"
-          >
+          <Button onClick={skipToPaywall} className="text-gray-400 hover:text-white bg-transparent">
             Skip Introduction
           </Button>
         </div>
@@ -216,7 +199,7 @@ const Marketing = () => {
   );
 };
 
-// PAYWALL COMPONENT
+// Paywall Component
 const Paywall = () => {
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [isLoading, setIsLoading] = useState(false);
@@ -250,10 +233,7 @@ const Paywall = () => {
   return (
     <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white flex flex-col">
       <div className="flex justify-between items-center p-6">
-        <Button
-          onClick={() => navigate(createPageUrl("Marketing"))}
-          className="text-cyan-300 hover:text-white bg-transparent"
-        >
+        <Button onClick={() => navigate(createPageUrl("Marketing"))} className="text-cyan-300 hover:text-white bg-transparent">
           Back
         </Button>
       </div>
@@ -270,9 +250,7 @@ const Paywall = () => {
               key={plan.id}
               onClick={() => setSelectedPlan(plan.id)}
               className={`relative p-6 rounded-xl border-2 cursor-pointer transition-all ${
-                selectedPlan === plan.id
-                  ? 'border-cyan-400 bg-cyan-400/10'
-                  : 'border-slate-600 bg-slate-800/50'
+                selectedPlan === plan.id ? 'border-cyan-400 bg-cyan-400/10' : 'border-slate-600 bg-slate-800/50'
               }`}
             >
               {plan.popular && (
@@ -312,10 +290,7 @@ const Paywall = () => {
           {isLoading ? 'Processing...' : `Subscribe ${selectedPlan === 'monthly' ? '$9.99/mo' : '$59.99/yr'}`}
         </Button>
         
-        <Button
-          onClick={() => {}}
-          className="w-full text-gray-400 hover:text-white bg-transparent"
-        >
+        <Button onClick={() => {}} className="w-full text-gray-400 hover:text-white bg-transparent">
           Restore Purchases
         </Button>
       </div>
@@ -323,12 +298,7 @@ const Paywall = () => {
   );
 };
 
-// OTHER PAGE COMPONENTS
-const Settings = () => <div className="p-4 text-white">Settings Page</div>;
-const Upload = () => <div className="p-4 text-white">Upload Page</div>;
-const Metadata = () => <div className="p-4 text-white">Metadata Page</div>;
-
-// BOTTOM NAVIGATION
+// Bottom Navigation
 const navItems = [
   { name: "Settings", icon: Settings2, page: "Settings" },
   { name: "Upload", icon: Upload2, page: "Upload" },
@@ -346,22 +316,10 @@ const BottomNav = () => {
           const IconComponent = item.icon;
           
           return (
-            <Link
-              key={item.name}
-              to={createPageUrl(item.page)}
-              className="relative flex flex-col items-center py-2 px-4 min-w-0 flex-1"
-            >
+            <Link key={item.name} to={createPageUrl(item.page)} className="relative flex flex-col items-center py-2 px-4 min-w-0 flex-1">
               <div className="relative z-10 flex flex-col items-center transition-transform duration-150 hover:scale-110 active:scale-95">
-                <IconComponent 
-                  className={`w-6 h-6 mb-1 transition-colors ${
-                    isActive ? 'text-cyan-400' : 'text-gray-400'
-                  }`} 
-                />
-                <span 
-                  className={`text-xs font-medium transition-colors ${
-                    isActive ? 'text-cyan-400' : 'text-gray-400'
-                  }`}
-                >
+                <IconComponent className={`w-6 h-6 mb-1 transition-colors ${isActive ? 'text-cyan-400' : 'text-gray-400'}`} />
+                <span className={`text-xs font-medium transition-colors ${isActive ? 'text-cyan-400' : 'text-gray-400'}`}>
                   {item.name}
                 </span>
               </div>
@@ -373,7 +331,7 @@ const BottomNav = () => {
   );
 };
 
-// MAIN APP
+// Main App
 function App() {
   return (
     <Router>
