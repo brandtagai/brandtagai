@@ -136,4 +136,47 @@ export default function Marketing() {
                       <motion.div
                         key={feature}
                         initial={{ x: -20, opacity: 0 }}
-                        an
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.5 + index * 0.1 }}
+                        className="flex items-center gap-3 justify-center"
+                      >
+                        <CheckCircle className="w-5 h-5 text-cyan-400" />
+                        <span className="text-gray-200">{feature}</span>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </div>
+              );
+            })()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <div className="p-6 space-y-4">
+        <Button
+          onClick={nextScreen}
+          className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl shadow-lg"
+          size="lg"
+        >
+          {currentScreen === marketingScreens.length - 1 ? (
+            "Get Started"
+          ) : (
+            <>
+              Continue <ArrowRight className="w-5 h-5 ml-2" />
+            </>
+          )}
+        </Button>
+        
+        <div className="flex justify-center">
+          <Button
+            variant="ghost" 
+            onClick={skipToPaywall}
+            className="text-gray-400 hover:text-white"
+          >
+            Skip Introduction
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
