@@ -1,0 +1,75 @@
+{
+  "name": "UserSettings",
+  "type": "object",
+  "properties": {
+    "logo_url": {
+      "type": "string",
+      "description": "URL of uploaded logo"
+    },
+    "brand_text": {
+      "type": "string",
+      "description": "Text to display next to logo (e.g., business name, website)"
+    },
+    "metadata_fields": {
+      "type": "object",
+      "properties": {
+        "copyright": {
+          "type": "string"
+        },
+        "creator": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "keywords": {
+          "type": "string"
+        }
+      }
+    },
+    "logo_position": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right"
+      ],
+      "default": "left"
+    },
+    "social_media_mode": {
+      "type": "boolean",
+      "default": false
+    },
+    "logo_circle_crop": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to crop logo into a circle"
+    }
+  },
+  "required": [],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "write": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
