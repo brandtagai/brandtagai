@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { UserSettings } from "@/entities/UserSettings";
-import { Purchase } from "@/entities/Purchase";
-import { User } from "@/entities/User";
+import { UserSettings } from "@/entities/mockEntities";
+import { Purchase } from "@/entities/mockEntities";
+import { User } from "@/entities/mockEntities";
 import { processImage } from "../components/utils/ImageProcessor";
 import { Upload as UploadIcon, Image, Download, Zap, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
