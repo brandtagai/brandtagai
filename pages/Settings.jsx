@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UserSettings } from "@/entities/UserSettings";
-import { User } from "@/entities/User";
+import { UserSettings } from "@/entities/mockEntities";
+import { User } from "@/entities/mockEntities";
 import { UploadFile } from "@/integrations/Core";
 import { Upload, Settings as SettingsIcon, Image, X } from "lucide-react";
 import { motion } from "framer-motion";
