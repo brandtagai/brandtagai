@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Purchase } from "@/entities/Purchase";
+import { Purchase } from "@/entities/mockEntities";
 import { 
   Crown, 
   Zap, 
