@@ -4,13 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { UserSettings } from "@/entities/mockEntities";
 import { Purchase } from "@/entities/mockEntities";
 import { User } from "@/entities/mockEntities";
-import { processImage } from "../components/utils/ImageProcessor";
+import { processImage } from "@/components/utils/ImageProcessor";
 import { Upload as UploadIcon, Image, Download, Zap, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import BottomNav from "../components/navigation/BottomNav";
-import ProcessingScreen from "../components/upload/ProcessingScreen";
+import BottomNav from "@/components/navigation/BottomNav";
+import ProcessingScreen from "@/components/upload/ProcessingScreen";
 
 export default function Upload() {
   const [files, setFiles] = useState([]);
