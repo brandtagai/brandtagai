@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from '../Layout';
+import Layout from './Layout';
 import Marketing from './pages/Marketing';
 import Paywall from './pages/Paywall';
 import Settings from './pages/Settings';
