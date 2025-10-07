@@ -1,11 +1,11 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from '../Layout';
-import Marketing from '../pages/Marketing';
-import Paywall from '../pages/Paywall';
-import Settings from '../pages/Settings';
-import Upload from '../pages/Upload';
-import Metadata from '../pages/Metadata';
+import Marketing from './pages/Marketing';
+import Paywall from './pages/Paywall';
+import Settings from './pages/Settings';
+import Upload from './pages/Upload';
+import Metadata from './pages/Metadata';
 
 function App() {
   return (
