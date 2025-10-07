@@ -9,7 +9,7 @@ import { User } from "@/entities/mockEntities";
 import { UploadFile } from "@/integrations/Core";
 import { Upload, Settings as SettingsIcon, Image, X } from "lucide-react";
 import { motion } from "framer-motion";
-import BottomNav from "../components/navigation/BottomNav";
+import BottomNav from "@/components/navigation/BottomNav";
 
 export default function Settings() {
   const [settings, setSettings] = useState({
