@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { UploadFile, InvokeLLM } from "@/integrations/Core";
 import { Shield, Upload, CheckCircle, ExternalLink, Eye } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import BottomNav from "../components/navigation/BottomNav";
+import BottomNav from "@/components/navigation/BottomNav";
 
 export default function Metadata() {
   const [selectedFile, setSelectedFile] = useState(null);
