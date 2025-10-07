@@ -1,37 +1,33 @@
-// Core.js - Integration functions for file uploads and API calls
+import * as React from "react";
 
-export async function UploadFile({ file }) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      // Return a data URL that can be used immediately
-      resolve({
-        file_url: e.target.result,
-        filename: file.name,
-        size: file.size,
-        type: file.type
-      });
-    };
-    
-    reader.onerror = () => {
-      reject(new Error('Failed to read file'));
-    };
-    
-    reader.readAsDataURL(file);
-  });
-}
+const Switch = React.forwardRef(({ className = "", checked = false, onCheckedChange, ...props }, ref) => {
+  const handleClick = () => {
+    if (onCheckedChange) {
+      onCheckedChange(!checked);
+    }
+  };
 
-export async function InvokeLLM({ prompt, model = "claude-sonnet-4-20250514", max_tokens = 1000 }) {
-  // Mock LLM invocation for development
-  // In production, this would call your actual LLM API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        response: "This is a mock LLM response. In production, this would return actual AI-generated content.",
-        model: model,
-        tokens_used: Math.floor(Math.random() * max_tokens)
-      });
-    }, 1000);
-  });
-}
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={handleClick}
+      className={`peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+        checked ? "bg-slate-900" : "bg-slate-200"
+      } ${className}`}
+      ref={ref}
+      {...props}
+    >
+      <span
+        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform ${
+          checked ? "translate-x-5" : "translate-x-0"
+        }`}
+      />
+    </button>
+  );
+});
+
+Switch.displayName = "Switch";
+
+export { Switch };
