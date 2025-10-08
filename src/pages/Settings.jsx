@@ -13,8 +13,8 @@ import BottomNav from "@/components/navigation/BottomNav";
 
 export default function Settings() {
   const [settings, setSettings] = useState({
-    logo_url: "",
-    brand_text: "",
+    logo_url: "",  // CHANGED: Was blank, keeping it blank (no default logo)
+    brand_text: "",  // CHANGED: Removed "DEMO" default value - NOW BLANK
     metadata_fields: {
       copyright: "",
       creator: "",
@@ -224,7 +224,7 @@ export default function Settings() {
                 <div key={field} className="space-y-2">
                   <Label className="text-blue-200 capitalize">{field.replace('_', ' ')}</Label>
                   <Input
-                    placeholder={`${field.replace('_', ' ')} (optional)`}
+                    placeholder={`Enter ${field.replace('_', ' ')} (optional)`}
                     value={value}
                     onChange={(e) => updateMetadataField(field, e.target.value)}
                     className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
