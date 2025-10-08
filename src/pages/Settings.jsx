@@ -14,7 +14,7 @@ import BottomNav from "@/components/navigation/BottomNav";
 export default function Settings() {
   const [settings, setSettings] = useState({
     logo_url: "",
-    brand_text: "", // Changed from business_name to brand_text
+    brand_text: "",
     metadata_fields: {
       copyright: "",
       creator: "",
@@ -23,13 +23,12 @@ export default function Settings() {
     },
     logo_position: "left",
     social_media_mode: false,
-    logo_circle_crop: false // Added new state for circle crop
+    logo_circle_crop: false
   });
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    // Scroll to top when component mounts
     window.scrollTo(0, 0);
     loadSettings();
   }, []);
@@ -66,7 +65,6 @@ export default function Settings() {
   };
 
   const handleSave = async () => {
-    // Check if user has at least one branding element (logo or brand text)
     if (!settings.logo_url && !settings.brand_text) {
       alert("Please add either a logo or brand text before saving.");
       return;
@@ -101,7 +99,6 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white pb-20">
-      {/* Header */}
       <div className="bg-slate-900/50 backdrop-blur-lg border-b border-white/20 sticky top-0 z-10">
         <div className="px-6 py-4">
           <motion.div
@@ -121,7 +118,6 @@ export default function Settings() {
       </div>
 
       <div className="px-6 py-6 space-y-6">
-        {/* Logo Upload */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -188,7 +184,6 @@ export default function Settings() {
           </Card>
         </motion.div>
 
-        {/* Brand Text (New Section) */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -214,7 +209,6 @@ export default function Settings() {
           </Card>
         </motion.div>
 
-        {/* Metadata Fields */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -226,7 +220,7 @@ export default function Settings() {
               <p className="text-sm text-blue-200">Embed copyright information directly into your images</p>
             </CardHeader>
             <CardContent className="space-y-4">
-              {Object.entries(settings.metadata_fields).map(([field, value]) => (
+              {settings.metadata_fields && Object.entries(settings.metadata_fields).map(([field, value]) => (
                 <div key={field} className="space-y-2">
                   <Label className="text-blue-200 capitalize">{field.replace('_', ' ')}</Label>
                   <Input
@@ -241,7 +235,6 @@ export default function Settings() {
           </Card>
         </motion.div>
 
-        {/* Positioning Options */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -297,7 +290,6 @@ export default function Settings() {
           </Card>
         </motion.div>
 
-        {/* Save Button */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
