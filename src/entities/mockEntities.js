@@ -1,120 +1,175 @@
-// Mock entities for Bolt preview mode
-// Place this file at: src/entities/mockEntities.js
-
-const isPreviewMode = () => {
-  return window.location.hostname.includes('staticblitz') || 
-         window.location.hostname.includes('webcontainer') ||
-         !window.location.hostname.includes('base44');
+const STORAGE_KEYS = {
+  USER_SETTINGS: 'brandtag_user_settings',
+  PURCHASES: 'brandtag_purchases'
 };
 
-const MOCK_USER = {
-  email: 'demo@preview.com',
-  name: 'Demo User',
+const DEFAULT_USER = {
+  email: 'user@brandtag.local',
+  name: 'User',
   role: 'user'
 };
 
-const MOCK_SETTINGS = {
-  id: 'mock-settings-1',
-  created_by: 'demo@preview.com',
-  logo_url: 'https://via.placeholder.com/200x200/3b82f6/ffffff?text=LOGO',
-  brand_text: 'DEMO BRAND',
-  watermark_position: 'bottom-right',
-  watermark_opacity: 0.7,
-  watermark_size: 'medium',
-  created_date: new Date().toISOString()
-};
+const getDefaultSettings = () => ({
+  logo_url: "",
+  brand_text: "",
+  metadata_fields: {
+    copyright: "",
+    creator: "",
+    description: "",
+    keywords: ""
+  },
+  logo_position: "left",
+  social_media_mode: false,
+  logo_circle_crop: false
+});
 
-const MOCK_PURCHASES = [
-  {
-    id: 'mock-purchase-1',
-    created_by: 'demo@preview.com',
-    product_id: 'brandtag_bundle_20',
-    amount: 10,
-    images_remaining: 100,
-    purchase_date: new Date().toISOString()
-  }
-];
-
-// Mock User entity
 export const User = {
   me: async () => {
-    if (isPreviewMode()) {
-      return MOCK_USER;
-    }
-    // Real implementation would go here
-    throw new Error('User.me() not available outside Base44');
+    return DEFAULT_USER;
   }
 };
 
-// Mock UserSettings entity
 export const UserSettings = {
   filter: async (query, sort, limit) => {
-    if (isPreviewMode()) {
-      return [MOCK_SETTINGS];
+    const stored = localStorage.getItem(STORAGE_KEYS.USER_SETTINGS);
+    if (stored) {
+      try {
+        const settings = JSON.parse(stored);
+        const defaultSettings = getDefaultSettings();
+        const mergedSettings = {
+          ...defaultSettings,
+          ...settings,
+          metadata_fields: {
+            ...defaultSettings.metadata_fields,
+            ...(settings.metadata_fields || {})
+          }
+        };
+        return [mergedSettings];
+      } catch (error) {
+        console.error('Error parsing stored settings:', error);
+        return [getDefaultSettings()];
+      }
     }
-    throw new Error('UserSettings.filter() not available outside Base44');
+    return [];
   },
-  
+
   create: async (data) => {
-    if (isPreviewMode()) {
-      console.log('Mock create UserSettings:', data);
-      const newSettings = {
-        id: `mock-settings-${Date.now()}`,
-        created_by: 'demo@preview.com',
-        ...data,
-        created_date: new Date().toISOString()
-      };
-      return newSettings;
-    }
-    throw new Error('UserSettings.create() not available outside Base44');
+    const defaultSettings = getDefaultSettings();
+    const newSettings = {
+      id: `settings-${Date.now()}`,
+      created_by: DEFAULT_USER.email,
+      ...data,
+      metadata_fields: {
+        ...defaultSettings.metadata_fields,
+        ...(data.metadata_fields || {})
+      },
+      created_date: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEYS.USER_SETTINGS, JSON.stringify(newSettings));
+    return newSettings;
   },
-  
+
   update: async (id, data) => {
-    if (isPreviewMode()) {
-      console.log('Mock update UserSettings:', id, data);
-      return { ...MOCK_SETTINGS, ...data };
+    const stored = localStorage.getItem(STORAGE_KEYS.USER_SETTINGS);
+    let existingSettings = {};
+
+    if (stored) {
+      try {
+        existingSettings = JSON.parse(stored);
+      } catch (error) {
+        console.error('Error parsing stored settings:', error);
+      }
     }
-    throw new Error('UserSettings.update() not available outside Base44');
+
+    const defaultSettings = getDefaultSettings();
+    const updatedSettings = {
+      ...existingSettings,
+      ...data,
+      metadata_fields: {
+        ...defaultSettings.metadata_fields,
+        ...(existingSettings.metadata_fields || {}),
+        ...(data.metadata_fields || {})
+      },
+      id: id || existingSettings.id || `settings-${Date.now()}`,
+      created_by: DEFAULT_USER.email,
+      updated_date: new Date().toISOString()
+    };
+
+    localStorage.setItem(STORAGE_KEYS.USER_SETTINGS, JSON.stringify(updatedSettings));
+    return updatedSettings;
   }
 };
 
-// Mock Purchase entity
 export const Purchase = {
   filter: async (query, sort, limit) => {
-    if (isPreviewMode()) {
-      return MOCK_PURCHASES;
+    const stored = localStorage.getItem(STORAGE_KEYS.PURCHASES);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (error) {
+        console.error('Error parsing stored purchases:', error);
+        return [];
+      }
     }
-    throw new Error('Purchase.filter() not available outside Base44');
+    return [];
   },
-  
+
   list: async (sort, limit) => {
-    if (isPreviewMode()) {
-      return MOCK_PURCHASES;
+    const stored = localStorage.getItem(STORAGE_KEYS.PURCHASES);
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (error) {
+        console.error('Error parsing stored purchases:', error);
+        return [];
+      }
     }
-    throw new Error('Purchase.list() not available outside Base44');
+    return [];
   },
-  
+
   create: async (data) => {
-    if (isPreviewMode()) {
-      console.log('Mock create Purchase:', data);
-      const newPurchase = {
-        id: `mock-purchase-${Date.now()}`,
-        created_by: 'demo@preview.com',
-        ...data,
-        purchase_date: new Date().toISOString()
-      };
-      MOCK_PURCHASES.push(newPurchase);
-      return newPurchase;
+    const stored = localStorage.getItem(STORAGE_KEYS.PURCHASES);
+    let purchases = [];
+
+    if (stored) {
+      try {
+        purchases = JSON.parse(stored);
+      } catch (error) {
+        console.error('Error parsing stored purchases:', error);
+      }
     }
-    throw new Error('Purchase.create() not available outside Base44');
+
+    const newPurchase = {
+      id: `purchase-${Date.now()}`,
+      created_by: DEFAULT_USER.email,
+      ...data,
+      purchase_date: new Date().toISOString()
+    };
+
+    purchases.push(newPurchase);
+    localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify(purchases));
+    return newPurchase;
   },
-  
+
   update: async (id, data) => {
-    if (isPreviewMode()) {
-      console.log('Mock update Purchase:', id, data);
-      MOCK_PURCHASES[0] = { ...MOCK_PURCHASES[0], ...data };
-      return MOCK_PURCHASES[0];
+    const stored = localStorage.getItem(STORAGE_KEYS.PURCHASES);
+    let purchases = [];
+
+    if (stored) {
+      try {
+        purchases = JSON.parse(stored);
+      } catch (error) {
+        console.error('Error parsing stored purchases:', error);
+      }
     }
-    throw new Error('Purchase.update() not available outside Base44');
+
+    const index = purchases.findIndex(p => p.id === id);
+    if (index !== -1) {
+      purchases[index] = { ...purchases[index], ...data, updated_date: new Date().toISOString() };
+      localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify(purchases));
+      return purchases[index];
+    }
+
+    return data;
   }
 };
