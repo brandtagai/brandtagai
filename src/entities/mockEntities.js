@@ -55,6 +55,20 @@ export const UserSettings = {
     throw new Error('UserSettings.filter() not available outside Base44');
   },
   
+  create: async (data) => {
+    if (isPreviewMode()) {
+      console.log('Mock create UserSettings:', data);
+      const newSettings = {
+        id: `mock-settings-${Date.now()}`,
+        created_by: 'demo@preview.com',
+        ...data,
+        created_date: new Date().toISOString()
+      };
+      return newSettings;
+    }
+    throw new Error('UserSettings.create() not available outside Base44');
+  },
+  
   update: async (id, data) => {
     if (isPreviewMode()) {
       console.log('Mock update UserSettings:', id, data);
@@ -71,6 +85,28 @@ export const Purchase = {
       return MOCK_PURCHASES;
     }
     throw new Error('Purchase.filter() not available outside Base44');
+  },
+  
+  list: async (sort, limit) => {
+    if (isPreviewMode()) {
+      return MOCK_PURCHASES;
+    }
+    throw new Error('Purchase.list() not available outside Base44');
+  },
+  
+  create: async (data) => {
+    if (isPreviewMode()) {
+      console.log('Mock create Purchase:', data);
+      const newPurchase = {
+        id: `mock-purchase-${Date.now()}`,
+        created_by: 'demo@preview.com',
+        ...data,
+        purchase_date: new Date().toISOString()
+      };
+      MOCK_PURCHASES.push(newPurchase);
+      return newPurchase;
+    }
+    throw new Error('Purchase.create() not available outside Base44');
   },
   
   update: async (id, data) => {
