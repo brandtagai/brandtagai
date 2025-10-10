@@ -212,9 +212,6 @@ function AIAssistant({ message, onClose }) {
   );
 }
 // ===== PART 2: MAIN SETTINGS COMPONENT & STATE =====
-// Paste this right after PART 1 (after the AIAssistant component)
-
-export default function Settings() {
   // ===== ALL STATE VARIABLES =====
   const [settings, setSettings] = useState({
     logo_url: "", // URL of uploaded logo
