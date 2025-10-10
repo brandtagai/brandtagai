@@ -211,3 +211,854 @@ function AIAssistant({ message, onClose }) {
     </AnimatePresence>
   );
 }
+// ===== PART 2: MAIN SETTINGS COMPONENT & STATE =====
+// Paste this right after PART 1 (after the AIAssistant component)
+
+export default function Settings() {
+  // ===== ALL STATE VARIABLES =====
+  const [settings, setSettings] = useState({
+    logo_url: "", // URL of uploaded logo
+    brand_text: "", // Text to display on watermark
+    metadata_fields: { // SEO metadata embedded in image
+      copyright: "",
+      creator: "",
+      description: "",
+      keywords: ""
+    },
+    logo_position: "left", // "left" or "right" positioning
+    social_media_mode: false, // Avoid crop zones on IG/TikTok
+    logo_circle_crop: false, // Circle crop toggle
+    font_family: "Arial", // Selected font from 50+ options
+    font_bold: false, // Bold text toggle
+    font_italic: false, // Italic text toggle
+    text_color: "#FFFFFF", // HEX color of text
+    text_size: 24, // Font size in pixels (10-48)
+    logo_size: 80, // Logo size in pixels (40-200)
+    opacity: 100, // Watermark opacity (0-100%)
+    drop_shadow: true, // Shadow effect toggle
+    qr_enabled: false, // QR code toggle
+    qr_website: "", // URL for QR code
+    qr_display_text: "", // Text to show with QR
+    social_platforms: [], // Array of selected social platforms with usernames
+    generate_landing_page: false // Generate clickable social icons landing page
+  });
+
+  // ===== UI STATE VARIABLES =====
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [extractedColors, setExtractedColors] = useState([]); // Colors extracted from logo
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(''); // Search for social platforms
+  const [aiMessage, setAiMessage] = useState(null); // AI assistant modal message
+  const [draggedIndex, setDraggedIndex] = useState(null); // Drag-drop index tracking
+
+  // ===== REFS =====
+  const canvasRef = useRef(null); // Canvas for color extraction
+  const colorPickerRef = useRef(null); // Color picker ref for click-outside detection
+
+  // ===== USEEFFECT: INITIAL LOAD =====
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    loadSettings();
+  }, []);
+
+  // ===== USEEFFECT: LOAD FROM LOCALSTORAGE =====
+  useEffect(() => {
+    const saved = localStorage.getItem('brandtag_settings');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setSettings(prev => ({ ...prev, ...parsed }));
+      } catch (e) {
+        console.error('Failed to load settings from localStorage');
+      }
+    }
+  }, []);
+
+  // ===== USEEFFECT: CLICK OUTSIDE COLOR PICKER =====
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(e.target)) {
+        setShowColorPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // ===== FUNCTION: LOAD SETTINGS FROM DATABASE =====
+  const loadSettings = async () => {
+    try {
+      const user = await User.me();
+      const userSettingsList = await UserSettings.filter({ created_by: user.email }, '-created_date', 1);
+      if (userSettingsList.length > 0) {
+        setSettings(prev => ({ ...prev, ...userSettingsList[0] }));
+      }
+    } catch (error) {
+      console.error("Error loading settings:", error);
+    }
+  };
+
+  // ===== FUNCTION: EXTRACT COLORS FROM LOGO =====
+  // Samples 5 points on logo, converts to HEX, AI suggests font based on color analysis
+  const extractColorsFromLogo = (imageUrl) => {
+    const img = new window.Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+
+      // Sample 5 positions: corners + center
+      const positions = [
+        [10, 10], [img.width - 10, 10],
+        [img.width / 2, img.height / 2],
+        [10, img.height - 10], [img.width - 10, img.height - 10]
+      ];
+
+      const colors = new Set();
+      positions.forEach(([x, y]) => {
+        const pixel = ctx.getImageData(x, y, 1, 1).data;
+        const hex = `#${((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1).toUpperCase()}`;
+        colors.add(hex);
+      });
+
+      setExtractedColors(Array.from(colors).slice(0, 6));
+
+      // AI Font Suggestion Logic
+      const centerPixel = ctx.getImageData(img.width / 2, img.height / 2, 1, 1).data;
+      const [r, g, b] = centerPixel;
+      
+      let suggestedFonts;
+      if (r > g && r > b) {
+        // Warm colors (red/orange) → Bold, impact fonts
+        suggestedFonts = ["Impact", "Arial Black", "Helvetica Neue", "Futura"];
+      } else if (b > r || g > r) {
+        // Cool colors (blue/green) → Clean, professional fonts
+        suggestedFonts = ["Calibri", "Segoe UI", "Trebuchet MS", "Verdana"];
+      } else {
+        // Grayscale → Elegant, serif fonts
+        suggestedFonts = ["Playfair Display", "Georgia", "Times New Roman", "Garamond"];
+      }
+
+      const randomFont = suggestedFonts[Math.floor(Math.random() * suggestedFonts.length)];
+      setAiMessage(`AI analyzed your logo and suggests ${randomFont} font for optimal brand consistency!`);
+      
+      setTimeout(() => {
+        setSettings(prev => ({ ...prev, font_family: randomFont }));
+      }, 3500);
+    };
+    img.src = imageUrl;
+  };
+
+  // ===== FUNCTION: HANDLE LOGO UPLOAD =====
+  const handleLogoUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    setIsUploading(true);
+    try {
+      const { file_url } = await UploadFile({ file });
+      setSettings(prev => ({ ...prev, logo_url: file_url }));
+      extractColorsFromLogo(file_url);
+      setAiMessage("Logo uploaded successfully! Analyzing colors...");
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+  
+  // ===== FUNCTION: REMOVE LOGO =====
+  const handleRemoveLogo = () => {
+    setSettings(prev => ({ ...prev, logo_url: "", logo_circle_crop: false }));
+    setExtractedColors([]);
+  };
+
+  // ===== FUNCTION: SAVE SETTINGS =====
+  // Saves to localStorage + database
+  const handleSave = async () => {
+    if (!settings.logo_url && !settings.brand_text) {
+      setAiMessage("Please add either a logo or brand text before saving!");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Save to localStorage
+      localStorage.setItem('brandtag_settings', JSON.stringify(settings));
+      
+      // Save to database
+      const user = await User.me();
+      const existingSettings = await UserSettings.filter({ created_by: user.email }, '-created_date', 1);
+      
+      if (existingSettings.length > 0) {
+        await UserSettings.update(existingSettings[0].id, settings);
+      } else {
+        await UserSettings.create(settings);
+      }
+
+      setAiMessage("Settings saved successfully! Your watermark is ready to use.");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      setAiMessage("Settings saved locally!");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // ===== FUNCTION: UPDATE METADATA FIELDS =====
+  const updateMetadataField = (field, value) => {
+    setSettings(prev => ({
+      ...prev,
+      metadata_fields: {
+        ...prev.metadata_fields,
+        [field]: value
+      }
+    }));
+  };
+
+  // ===== FUNCTION: AUTO-INSERT © SYMBOL =====
+  const handleCopyrightFocus = () => {
+    if (!settings.metadata_fields.copyright.includes('©')) {
+      updateMetadataField('copyright', '© ' + settings.metadata_fields.copyright);
+    }
+  };
+
+  // ===== FUNCTION: SELECT COLOR FROM PALETTE =====
+  const handleColorSelect = (color) => {
+    setSettings(prev => ({ ...prev, text_color: color }));
+    setShowColorPicker(false);
+  };
+
+  // ===== FUNCTION: ADD SOCIAL PLATFORM =====
+  const addSocialPlatform = (platform) => {
+    if (settings.social_platforms.find(p => p.name === platform.name)) {
+      setAiMessage(`${platform.name} is already added!`);
+      return;
+    }
+
+    const updatedPlatforms = [...settings.social_platforms, { ...platform, username: '' }];
+    setSettings(prev => ({ ...prev, social_platforms: updatedPlatforms }));
+    setSearchTerm('');
+    checkSpaceWarning(updatedPlatforms);
+  };
+
+  // ===== FUNCTION: REMOVE SOCIAL PLATFORM =====
+  const removeSocialPlatform = (index) => {
+    setSettings(prev => ({
+      ...prev,
+      social_platforms: prev.social_platforms.filter((_, i) => i !== index)
+    }));
+  };
+
+  // ===== FUNCTION: UPDATE SOCIAL USERNAME =====
+  const updateSocialUsername = (index, username) => {
+    const updatedPlatforms = [...settings.social_platforms];
+    updatedPlatforms[index].username = username;
+    setSettings(prev => ({ ...prev, social_platforms: updatedPlatforms }));
+  };
+
+  // ===== FUNCTION: SPACE WARNING CHECK =====
+  // Calculates if socials fit within image bounds + warns user
+  const checkSpaceWarning = (platforms) => {
+    const logoWidth = settings.logo_url ? settings.logo_size : 0;
+    const qrWidth = settings.qr_enabled ? 100 : 0;
+    const socialWidth = platforms.length * (settings.logo_size + 10);
+    const totalWidth = logoWidth + socialWidth + qrWidth + 60;
+    
+    const maxWidth = settings.social_media_mode ? 800 : 1200;
+
+    if (totalWidth > maxWidth) {
+      const itemsToRemove = Math.ceil((totalWidth - maxWidth) / (settings.logo_size + 10));
+      setAiMessage(`Too many elements! Remove ${itemsToRemove} platform${itemsToRemove === 1 ? '' : 's'} or disable Social Media Mode.`);
+    }
+  };
+
+  // ===== FUNCTION: DRAG START =====
+  const handleDragStart = (index) => setDraggedIndex(index);
+
+  // ===== FUNCTION: DRAG OVER - REORDER PLATFORMS =====
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const updatedPlatforms = [...settings.social_platforms];
+    const draggedItem = updatedPlatforms[draggedIndex];
+    updatedPlatforms.splice(draggedIndex, 1);
+    updatedPlatforms.splice(index, 0, draggedItem);
+
+    setSettings(prev => ({ ...prev, social_platforms: updatedPlatforms }));
+    setDraggedIndex(index);
+  };
+
+  // ===== FUNCTION: DRAG END =====
+  const handleDragEnd = () => setDraggedIndex(null);
+
+  // ===== FILTER PLATFORMS BY SEARCH TERM =====
+  const filteredPlatforms = PLATFORMS.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // ===== JSX RETURN STARTS NEXT (PART 3) =====
+  // ===== PART 3: JSX RETURN STATEMENT =====
+// Paste this after PART 2 to complete the component
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white pb-20">
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      
+      {aiMessage && (
+        <AIAssistant message={aiMessage} onClose={() => setAiMessage(null)} />
+      )}
+
+      {/* ===== HEADER ===== */}
+      <div className="bg-slate-900/50 backdrop-blur-lg border-b border-white/20 sticky top-0 z-10">
+        <div className="px-6 py-4">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-3"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
+              <Settings className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">Settings</h1>
+              <p className="text-sm text-blue-200">Configure your watermarking preferences</p>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* ===== MAIN CONTENT ===== */}
+      <div className="px-6 py-6 space-y-6">
+        
+        {/* ===== SECTION 1: BRAND LOGO ===== */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+          <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
+            <CardHeader>
+              <CardTitle className="text-white">Brand Logo</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4">
+                {settings.logo_url && (
+                  <div className="relative">
+                    <img
+                      src={settings.logo_url}
+                      alt="Logo"
+                      className={`object-contain border-2 border-white/20 bg-white/10 ${settings.logo_circle_crop ? 'rounded-full' : 'rounded-lg'}`}
+                      style={{ width: `${settings.logo_size}px`, height: `${settings.logo_size}px` }}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleRemoveLogo}
+                      className="absolute -top-2 -right-2 h-6 w-6 bg-black/80 text-white rounded-full hover:bg-black"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Label htmlFor="logo-upload" className="cursor-pointer">
+                    <div className="border-2 border-dashed border-white/30 rounded-xl p-4 text-center hover:border-cyan-400 hover:bg-cyan-400/10 transition-colors">
+                      <Upload className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-300">
+                        {isUploading ? "Uploading..." : settings.logo_url ? "Upload New Logo" : "Upload Logo"}
+                      </p>
+                    </div>
+                  </Label>
+                  <input
+                    id="logo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                </div>
+              </div>
+              
+              {!settings.logo_url && (
+                <div className="text-center">
+                  <a href="https://logosnap.ai" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 text-sm underline">
+                    Need a logo? Try LogoSnap AI →
+                  </a>
+                </div>
+              )}
+
+              {settings.logo_url && (
+                <>
+                  <div className="text-center">
+                    <button
+                      onClick={() => setSettings(prev => ({ ...prev, logo_circle_crop: !prev.logo_circle_crop }))}
+                      className="text-cyan-400 hover:text-cyan-300 text-sm underline"
+                    >
+                      {settings.logo_circle_crop ? "Remove" : "Apply"} Circle Crop
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-blue-200">Logo Size: {settings.logo_size}px</Label>
+                    <input
+                      type="range"
+                      min="40"
+                      max="200"
+                      value={settings.logo_size}
+                      onChange={(e) => setSettings(prev => ({ ...prev, logo_size: parseInt(e.target.value) }))}
+                      className="w-full h-2 bg-white/20 rounded-lg cursor-pointer"
+                      style={{ accentColor: '#60a5fa' }}
+                    />
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ===== SECTION 2: BRAND TEXT ===== */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
+            <CardHeader>
+              <CardTitle className="text-white">Brand Text</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-blue-200">Text on Images</Label>
+                  <Input
+                    placeholder="Business name, website, social media handle or slogan"
+                    value={settings.brand_text}
+                    onChange={(e) => setSettings(prev => ({ ...prev, brand_text: e.target.value }))}
+                    className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
+                  />
+                  <p className="text-xs text-gray-400">Appears on your images</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-blue-200">Font Style</Label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={settings.font_family}
+                      onChange={(e) => setSettings(prev => ({ ...prev, font_family: e.target.value }))}
+                      className="flex-1 bg-white/5 border border-white/20 text-white rounded-lg px-3 py-2 focus:border-cyan-400 focus:outline-none"
+                      style={{ fontFamily: settings.font_family }}
+                    >
+                      {GOOGLE_FONTS.map(font => (
+                        <option key={font} value={font} style={{ fontFamily: font }}>
+                          {font}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      onClick={() => setSettings(prev => ({ ...prev, font_bold: !prev.font_bold }))}
+                      className={`w-10 h-10 rounded-lg border-2 font-bold transition-all ${
+                        settings.font_bold
+                          ? 'border-blue-900 bg-blue-900 text-white ring-2 ring-blue-400'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                      }`}
+                    >
+                      B
+                    </button>
+
+                    <button
+                      onClick={() => setSettings(prev => ({ ...prev, font_italic: !prev.font_italic }))}
+                      className={`w-10 h-10 rounded-lg border-2 italic transition-all ${
+                        settings.font_italic
+                          ? 'border-blue-900 bg-blue-900 text-white ring-2 ring-blue-400'
+                          : 'border-gray-300 bg-white text-gray-700 hover:border-blue-400'
+                      }`}
+                    >
+                      I
+                    </button>
+
+                    <div className="relative" ref={colorPickerRef}>
+                      <button
+                        onClick={() => setShowColorPicker(!showColorPicker)}
+                        className="w-10 h-10 rounded-full border-2 border-white/40 hover:border-white transition-all shadow-lg"
+                        style={{ backgroundColor: settings.text_color }}
+                      />
+                      
+                      {showColorPicker && (
+                        <div className="absolute top-12 right-0 bg-slate-800 border border-white/20 rounded-lg p-3 shadow-xl z-50 min-w-[200px]">
+                          <input
+                            type="color"
+                            value={settings.text_color}
+                            onChange={(e) => setSettings(prev => ({ ...prev, text_color: e.target.value }))}
+                            className="w-full h-10 rounded cursor-pointer mb-2"
+                          />
+                          <Input
+                            value={settings.text_color}
+                            onChange={(e) => setSettings(prev => ({ ...prev, text_color: e.target.value }))}
+                            className="bg-white/5 border-white/20 text-white text-sm"
+                            placeholder="#FFFFFF"
+                          />
+                          
+                          {extractedColors.length > 0 && (
+                            <>
+                              <div className="text-xs text-gray-400 mt-3 mb-2">From Your Logo:</div>
+                              <div className="grid grid-cols-6 gap-1">
+                                {extractedColors.map((color, idx) => (
+                                  <button
+                                    key={idx}
+                                    onClick={() => handleColorSelect(color)}
+                                    className="w-full aspect-square rounded border border-white/20 hover:scale-110 transition-transform"
+                                    style={{ backgroundColor: color }}
+                                    title={color}
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-blue-200">Text Size: {settings.text_size}px</Label>
+                  <input
+                    type="range"
+                    min="10"
+                    max="48"
+                    value={settings.text_size}
+                    onChange={(e) => setSettings(prev => ({ ...prev, text_size: parseInt(e.target.value) }))}
+                    className="w-full h-2 bg-white/20 rounded-lg cursor-pointer"
+                    style={{ accentColor: '#60a5fa' }}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ===== SECTION 3: BRAND SOCIALS ===== */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
+            <CardHeader>
+              <CardTitle className="text-white">Brand Socials</CardTitle>
+              <p className="text-sm text-blue-200">Add your social media handles (110 platforms available)</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Search platforms..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
+                />
+              </div>
+
+              {searchTerm && (
+                <div className="max-h-48 overflow-y-auto bg-slate-800 rounded-lg border border-white/20">
+                  {filteredPlatforms.map((platform, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => addSocialPlatform(platform)}
+                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-white/10 transition-colors text-left"
+                    >
+                      <img
+                        src={platform.icon}
+                        alt={platform.name}
+                        className="w-6 h-6 rounded-full object-cover"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                      <span className="text-white">{platform.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {settings.social_platforms.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-blue-200">Your Social Platforms ({settings.social_platforms.length})</Label>
+                  <div className="space-y-2">
+                    {settings.social_platforms.map((platform, index) => (
+                      <div
+                        key={index}
+                        draggable
+                        onDragStart={() => handleDragStart(index)}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDragEnd={handleDragEnd}
+                        className={`flex items-center gap-3 bg-slate-800 rounded-lg p-3 border border-white/20 cursor-move ${
+                          draggedIndex === index ? 'opacity-50' : ''
+                        }`}
+                      >
+                        <GripVertical className="w-4 h-4 text-gray-400" />
+                        <img
+                          src={platform.icon}
+                          alt={platform.name}
+                          className="w-8 h-8 rounded-full object-cover"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm text-gray-300 mb-1">{platform.name}</div>
+                          <Input
+                            placeholder="YourHandle"
+                            value={platform.username}
+                            onChange={(e) => updateSocialUsername(index, e.target.value)}
+                            className="bg-white/5 border-white/20 text-white text-sm placeholder:text-gray-500 focus:border-cyan-400"
+                          />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeSocialPlatform(index)}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ===== SECTION 4: QR CODE ===== */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+          <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
+            <CardHeader>
+              <CardTitle className="text-white">QR Code</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between py-2 border-b border-white/10">
+                <Label className="text-blue-200">Enable QR Code</Label>
+                <Switch
+                  checked={settings.qr_enabled}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, qr_enabled: checked }))}
+                  style={{ backgroundColor: settings.qr_enabled ? '#60a5fa' : undefined }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-blue-200">Website URL</Label>
+                <Input
+                  placeholder="https://yourbrand.com"
+                  value={settings.qr_website}
+                  onChange={(e) => setSettings(prev => ({ ...prev, qr_website: e.target.value }))}
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
+                  disabled={!settings.qr_enabled}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-blue-200">Display Text</Label>
+                <Input
+                  placeholder="Scan for more"
+                  value={settings.qr_display_text}
+                  onChange={(e) => setSettings(prev => ({ ...prev, qr_display_text: e.target.value }))}
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
+                  disabled={!settings.qr_enabled}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ===== SECTION 5: WATERMARK POSITIONING ===== */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
+            <CardHeader>
+              <CardTitle className="text-white">Watermark Positioning</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between py-2 border-b border-white/10">
+                <div>
+                  <Label className="text-base font-medium text-white">Position Side</Label>
+                  <p className="text-sm text-blue-200">Choose bottom-left or bottom-right</p>
+                </div>
+                <div className="flex bg-slate-800 rounded-lg p-1">
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, logo_position: "left" }))}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      settings.logo_position === "left"
+                        ? "bg-blue-900 text-white"
+                        : "text-gray-300 hover:text-white"
+                    }`}
+                  >
+                    Left
+                  </button>
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, logo_position: "right" }))}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                      settings.logo_position === "right"
+                        ? "bg-blue-900 text-white"
+                        : "text-gray-300 hover:text-white"
+                    }`}
+                  >
+                    Right
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-blue-200">Opacity: {settings.opacity}%</Label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={settings.opacity}
+                  onChange={(e) => setSettings(prev => ({ ...prev, opacity: parseInt(e.target.value) }))}
+                  className="w-full h-2 bg-white/20 rounded-lg cursor-pointer"
+                  style={{ accentColor: '#60a5fa' }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-white/10">
+                <div>
+                  <Label className="text-base font-medium text-white">Drop Shadow</Label>
+                  <p className="text-sm text-blue-200">Add subtle shadow for contrast</p>
+                </div>
+                <Switch
+                  checked={settings.drop_shadow}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, drop_shadow: checked }))}
+                  style={{ backgroundColor: settings.drop_shadow ? '#60a5fa' : undefined }}
+                />
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-white/10">
+                <div>
+                  <Label className="text-base font-medium text-white">Social Media Mode</Label>
+                  <p className="text-sm text-blue-200">Avoid crop zones on social platforms</p>
+                </div>
+                <Switch
+                  checked={settings.social_media_mode}
+                  onCheckedChange={(checked) => {
+                    setSettings(prev => ({ ...prev, social_media_mode: checked }));
+                    if (checked) checkSpaceWarning(settings.social_platforms);
+                  }}
+                  style={{ backgroundColor: settings.social_media_mode ? '#60a5fa' : undefined }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ===== SECTION 6: EXPORT OPTIONS ===== */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+          <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
+            <CardHeader>
+              <CardTitle className="text-white">Export Options</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between py-2 border-b border-white/10">
+                <div>
+                  <Label className="text-base font-medium text-white">Generate Shareable Landing Page</Label>
+                  <p className="text-sm text-blue-200">Create clickable social icons that drive traffic to your profiles</p>
+                </div>
+                <Switch
+                  checked={settings.generate_landing_page}
+                  onCheckedChange={(checked) => setSettings(prev => ({ ...prev, generate_landing_page: checked }))}
+                  style={{ backgroundColor: settings.generate_landing_page ? '#60a5fa' : undefined }}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ===== SECTION 7: IMAGE METADATA (SEO) ===== */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
+          <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
+            <CardHeader>
+              <CardTitle className="text-white">Image Metadata (SEO)</CardTitle>
+              <p className="text-sm text-blue-200">Embed copyright information directly into your images</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-blue-200">Copyright</Label>
+                <Input
+                  placeholder="© 2025 Your Company Name"
+                  value={settings.metadata_fields.copyright}
+                  onChange={(e) => updateMetadataField('copyright', e.target.value)}
+                  onFocus={handleCopyrightFocus}
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-blue-200">Creator</Label>
+                <Input
+                  placeholder="Your Name or Company"
+                  value={settings.metadata_fields.creator}
+                  onChange={(e) => updateMetadataField('creator', e.target.value)}
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-blue-200">Description</Label>
+                <Input
+                  placeholder="Brief description of your brand or image"
+                  value={settings.metadata_fields.description}
+                  onChange={(e) => updateMetadataField('description', e.target.value)}
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-blue-200">Keywords</Label>
+                <Input
+                  placeholder="photography, branding, marketing"
+                  value={settings.metadata_fields.keywords}
+                  onChange={(e) => updateMetadataField('keywords', e.target.value)}
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* ===== SAVE BUTTON ===== */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="w-full text-white font-semibold py-3 rounded-xl shadow-lg"
+            style={{ background: 'linear-gradient(to right, #60a5fa 0%, #1e3a8a 100%)' }}
+            size="lg"
+          >
+            {isSaving ? "Saving..." : "Save Settings"}
+          </Button>
+        </motion.div>
+
+        {/* ===== RESET TO DEFAULTS ===== */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }}>
+          <Button
+            onClick={() => {
+              if (window.confirm('Reset all settings to defaults? This cannot be undone.')) {
+                localStorage.removeItem('brandtag_settings');
+                window.location.reload();
+              }
+            }}
+            variant="outline"
+            className="w-full border-red-400/50 text-red-400 hover:bg-red-400/10"
+          >
+            Reset to Defaults
+          </Button>
+        </motion.div>
+
+        {/* ===== PRIVACY MESSAGE ===== */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}>
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+            <p className="text-sm text-blue-200 text-center">
+              <strong>Privacy-First App.</strong> Settings saved in your browser. Clearing history will reset your preferences.
+            </p>
+          </div>
+        </motion.div>
+
+      </div>
+
+      <BottomNav />
+    </div>
+  );
+}
