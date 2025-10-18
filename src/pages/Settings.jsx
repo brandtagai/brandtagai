@@ -1,20 +1,19 @@
-// ===== PART 1: IMPORTS & STATE SETUP =====
-// Copy this entire section and paste it at the top of your Settings.jsx file
-
+import React, { useState, useEffect } from "react";
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+@@ -7,14 +7,227 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserSettings } from "@/entities/mockEntities";
 import { User } from "@/entities/mockEntities";
 import { UploadFile } from "@/integrations/Core";
+import { Upload, Settings as SettingsIcon, Image, X } from "lucide-react";
+import { motion } from "framer-motion";
 import { Upload, Settings, Image, X, AlertTriangle, Sparkles, GripVertical, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import BottomNav from "@/components/navigation/BottomNav";
 
-// ===== ALL 110 SOCIAL MEDIA PLATFORMS =====
+// 110 Social Media Platforms (alphabetically sorted)
 const PLATFORMS = [
   { name: '9GAG', icon: '/icons/9gag.png' },
   { name: '9GAG TV', icon: '/icons/9gag.png' },
@@ -122,7 +121,7 @@ const PLATFORMS = [
   { name: 'Zynn', icon: '/icons/zynn.png' }
 ];
 
-// ===== GOOGLE FONTS LIST (50+ fonts, expandable to 500+) =====
+// Google Fonts (50 most popular - expand to 500+ by adding more)
 const GOOGLE_FONTS = [
   "Arial", "Arial Black", "Calibri", "Cambria", "Candara", "Century Gothic",
   "Comic Sans MS", "Courier New", "Futura", "Garamond", "Georgia", "Gill Sans",
@@ -130,11 +129,12 @@ const GOOGLE_FONTS = [
   "Palatino", "Perpetua", "Playfair Display", "Rockwell", "Segoe UI", "Tahoma", 
   "Times New Roman", "Trebuchet MS", "Verdana", "Roboto", "Open Sans", "Lato", 
   "Montserrat", "Oswald", "Raleway", "PT Sans", "Source Sans Pro", "Poppins", 
-  "Merriweather", "Ubuntu", "Nunito", "Roboto Condensed", "Roboto Slab"
+  "Merriweather", "Ubuntu", "Nunito", "Roboto Condensed", "Roboto Slab", 
+  "Noto Sans", "Fira Sans", "Work Sans", "Inter", "DM Sans", "Bebas Neue",
+  "Crimson Text", "EB Garamond", "Libre Baskerville"
 ].sort();
 
-// ===== AI ASSISTANT COMPONENT =====
-// Animated modal with breathing logo, white shine, letter-by-letter typing
+// AI Assistant Component
 function AIAssistant({ message, onClose }) {
   const [displayedText, setDisplayedText] = useState('');
   const [isVisible, setIsVisible] = useState(true);
@@ -150,9 +150,9 @@ function AIAssistant({ message, onClose }) {
         setTimeout(() => {
           setIsVisible(false);
           setTimeout(onClose, 500);
-        }, 3000); // Display for 3 seconds before fading
+        }, 3000);
       }
-    }, 30); // 30ms per letter for smooth typing
+    }, 30);
 
     return () => clearInterval(interval);
   }, [message, onClose]);
@@ -173,25 +173,40 @@ function AIAssistant({ message, onClose }) {
           className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 max-w-md w-full shadow-2xl border border-cyan-400/30"
         >
           <div className="flex flex-col items-center gap-4">
-            {/* Breathing Logo Animation */}
             <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              animate={{
+                scale: [1, 1.05, 1],
+              }}
+              transition={{
+                duration: 3,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
               className="relative w-24 h-24"
             >
               <div className="w-full h-full rounded-full overflow-hidden">
-                <img src="/brandtag-ai-logo.png" alt="BrandTag AI" className="w-full h-full object-cover" />
+                <img
+                  src="/brandtag-ai-logo.png"
+                  alt="BrandTag AI"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              {/* White Shine Effect */}
               <motion.div
                 className="absolute inset-0 rounded-full pointer-events-none"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)' }}
-                animate={{ left: ['-100%', '200%'] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                style={{
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)',
+                }}
+                animate={{
+                  left: ['-100%', '200%'],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "linear"
+                }}
               />
             </motion.div>
             
-            {/* Logo Text */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -201,7 +216,6 @@ function AIAssistant({ message, onClose }) {
               BrandTag AI
             </motion.div>
 
-            {/* Letter-by-letter typing text */}
             <div className="text-white text-center leading-relaxed min-h-[60px]">
               {displayedText}
             </div>
@@ -211,55 +225,53 @@ function AIAssistant({ message, onClose }) {
     </AnimatePresence>
   );
 }
-// ===== PART 2: MAIN SETTINGS COMPONENT & STATE =====
-  // ===== ALL STATE VARIABLES =====
+
+export default function Settings() {
   const [settings, setSettings] = useState({
-    logo_url: "", // URL of uploaded logo
-    brand_text: "", // Text to display on watermark
-    metadata_fields: { // SEO metadata embedded in image
+    logo_url: "",  // CHANGED: Was blank, keeping it blank (no default logo)
+    brand_text: "",  // CHANGED: Removed "DEMO" default value - NOW BLANK
+    logo_url: "",
+    brand_text: "",
+    metadata_fields: {
       copyright: "",
       creator: "",
-      description: "",
-      keywords: ""
+@@ -23,28 +236,121 @@ export default function Settings() {
     },
-    logo_position: "left", // "left" or "right" positioning
-    social_media_mode: false, // Avoid crop zones on IG/TikTok
-    logo_circle_crop: false, // Circle crop toggle
-    font_family: "Arial", // Selected font from 50+ options
-    font_bold: false, // Bold text toggle
-    font_italic: false, // Italic text toggle
-    text_color: "#FFFFFF", // HEX color of text
-    text_size: 24, // Font size in pixels (10-48)
-    logo_size: 80, // Logo size in pixels (40-200)
-    opacity: 100, // Watermark opacity (0-100%)
-    drop_shadow: true, // Shadow effect toggle
-    qr_enabled: false, // QR code toggle
-    qr_website: "", // URL for QR code
-    qr_display_text: "", // Text to show with QR
-    social_platforms: [], // Array of selected social platforms with usernames
-    generate_landing_page: false // Generate clickable social icons landing page
+    logo_position: "left",
+    social_media_mode: false,
+    logo_circle_crop: false
+    logo_circle_crop: false,
+    font_family: "Arial",
+    font_bold: false,
+    font_italic: false,
+    text_color: "#FFFFFF",
+    text_size: 24,
+    logo_size: 80,
+    opacity: 100,
+    drop_shadow: true,
+    qr_enabled: false,
+    qr_website: "",
+    qr_display_text: "",
+    social_platforms: [],
+    generate_landing_page: false
   });
 
-  // ===== UI STATE VARIABLES =====
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [extractedColors, setExtractedColors] = useState([]); // Colors extracted from logo
+  const [extractedColors, setExtractedColors] = useState([]);
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(''); // Search for social platforms
-  const [aiMessage, setAiMessage] = useState(null); // AI assistant modal message
-  const [draggedIndex, setDraggedIndex] = useState(null); // Drag-drop index tracking
+  const [searchTerm, setSearchTerm] = useState('');
+  const [aiMessage, setAiMessage] = useState(null);
+  const [draggedIndex, setDraggedIndex] = useState(null);
 
-  // ===== REFS =====
-  const canvasRef = useRef(null); // Canvas for color extraction
-  const colorPickerRef = useRef(null); // Color picker ref for click-outside detection
+  const canvasRef = useRef(null);
+  const colorPickerRef = useRef(null);
 
-  // ===== USEEFFECT: INITIAL LOAD =====
   useEffect(() => {
     window.scrollTo(0, 0);
     loadSettings();
   }, []);
 
-  // ===== USEEFFECT: LOAD FROM LOCALSTORAGE =====
   useEffect(() => {
     const saved = localStorage.getItem('brandtag_settings');
     if (saved) {
@@ -267,12 +279,11 @@ function AIAssistant({ message, onClose }) {
         const parsed = JSON.parse(saved);
         setSettings(prev => ({ ...prev, ...parsed }));
       } catch (e) {
-        console.error('Failed to load settings from localStorage');
+        console.error('Failed to load settings');
       }
     }
   }, []);
 
-  // ===== USEEFFECT: CLICK OUTSIDE COLOR PICKER =====
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (colorPickerRef.current && !colorPickerRef.current.contains(e.target)) {
@@ -283,12 +294,12 @@ function AIAssistant({ message, onClose }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // ===== FUNCTION: LOAD SETTINGS FROM DATABASE =====
   const loadSettings = async () => {
     try {
       const user = await User.me();
       const userSettingsList = await UserSettings.filter({ created_by: user.email }, '-created_date', 1);
       if (userSettingsList.length > 0) {
+        setSettings(userSettingsList[0]);
         setSettings(prev => ({ ...prev, ...userSettingsList[0] }));
       }
     } catch (error) {
@@ -296,8 +307,6 @@ function AIAssistant({ message, onClose }) {
     }
   };
 
-  // ===== FUNCTION: EXTRACT COLORS FROM LOGO =====
-  // Samples 5 points on logo, converts to HEX, AI suggests font based on color analysis
   const extractColorsFromLogo = (imageUrl) => {
     const img = new window.Image();
     img.crossOrigin = "Anonymous";
@@ -308,11 +317,12 @@ function AIAssistant({ message, onClose }) {
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
 
-      // Sample 5 positions: corners + center
       const positions = [
-        [10, 10], [img.width - 10, 10],
+        [10, 10],
+        [img.width - 10, 10],
         [img.width / 2, img.height / 2],
-        [10, img.height - 10], [img.width - 10, img.height - 10]
+        [10, img.height - 10],
+        [img.width - 10, img.height - 10]
       ];
 
       const colors = new Set();
@@ -324,19 +334,15 @@ function AIAssistant({ message, onClose }) {
 
       setExtractedColors(Array.from(colors).slice(0, 6));
 
-      // AI Font Suggestion Logic
       const centerPixel = ctx.getImageData(img.width / 2, img.height / 2, 1, 1).data;
       const [r, g, b] = centerPixel;
       
       let suggestedFonts;
       if (r > g && r > b) {
-        // Warm colors (red/orange) → Bold, impact fonts
         suggestedFonts = ["Impact", "Arial Black", "Helvetica Neue", "Futura"];
       } else if (b > r || g > r) {
-        // Cool colors (blue/green) → Clean, professional fonts
         suggestedFonts = ["Calibri", "Segoe UI", "Trebuchet MS", "Verdana"];
       } else {
-        // Grayscale → Elegant, serif fonts
         suggestedFonts = ["Playfair Display", "Georgia", "Times New Roman", "Garamond"];
       }
 
@@ -350,12 +356,10 @@ function AIAssistant({ message, onClose }) {
     img.src = imageUrl;
   };
 
-  // ===== FUNCTION: HANDLE LOGO UPLOAD =====
   const handleLogoUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    
-    setIsUploading(true);
+@@ -53,6 +359,8 @@ export default function Settings() {
     try {
       const { file_url } = await UploadFile({ file });
       setSettings(prev => ({ ...prev, logo_url: file_url }));
@@ -364,35 +368,30 @@ function AIAssistant({ message, onClose }) {
     } catch (error) {
       console.error("Error uploading logo:", error);
     } finally {
-      setIsUploading(false);
-    }
+@@ -61,17 +369,20 @@ export default function Settings() {
   };
-  
-  // ===== FUNCTION: REMOVE LOGO =====
+
   const handleRemoveLogo = () => {
+    setSettings(prev => ({ ...prev, logo_url: "" }));
     setSettings(prev => ({ ...prev, logo_url: "", logo_circle_crop: false }));
     setExtractedColors([]);
   };
 
-  // ===== FUNCTION: SAVE SETTINGS =====
-  // Saves to localStorage + database
   const handleSave = async () => {
     if (!settings.logo_url && !settings.brand_text) {
+      alert("Please add either a logo or brand text before saving.");
       setAiMessage("Please add either a logo or brand text before saving!");
       return;
     }
 
     setIsSaving(true);
     try {
-      // Save to localStorage
       localStorage.setItem('brandtag_settings', JSON.stringify(settings));
       
-      // Save to database
       const user = await User.me();
       const existingSettings = await UserSettings.filter({ created_by: user.email }, '-created_date', 1);
-      
-      if (existingSettings.length > 0) {
-        await UserSettings.update(existingSettings[0].id, settings);
+
+@@ -80,8 +391,11 @@ export default function Settings() {
       } else {
         await UserSettings.create(settings);
       }
@@ -404,62 +403,45 @@ function AIAssistant({ message, onClose }) {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  // ===== FUNCTION: UPDATE METADATA FIELDS =====
-  const updateMetadataField = (field, value) => {
-    setSettings(prev => ({
-      ...prev,
-      metadata_fields: {
-        ...prev.metadata_fields,
-        [field]: value
-      }
+@@ -97,8 +411,88 @@ export default function Settings() {
     }));
   };
 
-  // ===== FUNCTION: AUTO-INSERT © SYMBOL =====
   const handleCopyrightFocus = () => {
     if (!settings.metadata_fields.copyright.includes('©')) {
       updateMetadataField('copyright', '© ' + settings.metadata_fields.copyright);
     }
   };
 
-  // ===== FUNCTION: SELECT COLOR FROM PALETTE =====
   const handleColorSelect = (color) => {
     setSettings(prev => ({ ...prev, text_color: color }));
     setShowColorPicker(false);
   };
 
-  // ===== FUNCTION: ADD SOCIAL PLATFORM =====
   const addSocialPlatform = (platform) => {
     if (settings.social_platforms.find(p => p.name === platform.name)) {
       setAiMessage(`${platform.name} is already added!`);
       return;
     }
 
-    const updatedPlatforms = [...settings.social_platforms, { ...platform, username: '' }];
+    const newPlatform = { ...platform, username: '' };
+    const updatedPlatforms = [...settings.social_platforms, newPlatform];
     setSettings(prev => ({ ...prev, social_platforms: updatedPlatforms }));
     setSearchTerm('');
     checkSpaceWarning(updatedPlatforms);
   };
 
-  // ===== FUNCTION: REMOVE SOCIAL PLATFORM =====
   const removeSocialPlatform = (index) => {
-    setSettings(prev => ({
-      ...prev,
-      social_platforms: prev.social_platforms.filter((_, i) => i !== index)
-    }));
+    const updatedPlatforms = settings.social_platforms.filter((_, i) => i !== index);
+    setSettings(prev => ({ ...prev, social_platforms: updatedPlatforms }));
   };
 
-  // ===== FUNCTION: UPDATE SOCIAL USERNAME =====
   const updateSocialUsername = (index, username) => {
     const updatedPlatforms = [...settings.social_platforms];
     updatedPlatforms[index].username = username;
     setSettings(prev => ({ ...prev, social_platforms: updatedPlatforms }));
   };
 
-  // ===== FUNCTION: SPACE WARNING CHECK =====
-  // Calculates if socials fit within image bounds + warns user
   const checkSpaceWarning = (platforms) => {
     const logoWidth = settings.logo_url ? settings.logo_size : 0;
     const qrWidth = settings.qr_enabled ? 100 : 0;
@@ -474,10 +456,10 @@ function AIAssistant({ message, onClose }) {
     }
   };
 
-  // ===== FUNCTION: DRAG START =====
-  const handleDragStart = (index) => setDraggedIndex(index);
+  const handleDragStart = (index) => {
+    setDraggedIndex(index);
+  };
 
-  // ===== FUNCTION: DRAG OVER - REORDER PLATFORMS =====
   const handleDragOver = (e, index) => {
     e.preventDefault();
     if (draggedIndex === null || draggedIndex === index) return;
@@ -491,17 +473,13 @@ function AIAssistant({ message, onClose }) {
     setDraggedIndex(index);
   };
 
-  // ===== FUNCTION: DRAG END =====
-  const handleDragEnd = () => setDraggedIndex(null);
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
 
-  // ===== FILTER PLATFORMS BY SEARCH TERM =====
   const filteredPlatforms = PLATFORMS.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  // ===== JSX RETURN STARTS NEXT (PART 3) =====
-  // ===== PART 3: JSX RETURN STATEMENT =====
-// Paste this after PART 2 to complete the component
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 text-white pb-20">
@@ -511,32 +489,36 @@ function AIAssistant({ message, onClose }) {
         <AIAssistant message={aiMessage} onClose={() => setAiMessage(null)} />
       )}
 
-      {/* ===== HEADER ===== */}
       <div className="bg-slate-900/50 backdrop-blur-lg border-b border-white/20 sticky top-0 z-10">
         <div className="px-6 py-4">
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
+@@ -107,7 +501,7 @@ export default function Settings() {
             className="flex items-center gap-3"
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
+              <SettingsIcon className="w-6 h-6 text-white" />
               <Settings className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-white">Settings</h1>
-              <p className="text-sm text-blue-200">Configure your watermarking preferences</p>
-            </div>
-          </motion.div>
-        </div>
+@@ -118,33 +512,28 @@ export default function Settings() {
       </div>
 
-      {/* ===== MAIN CONTENT ===== */}
       <div className="px-6 py-6 space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
         
-        {/* ===== SECTION 1: BRAND LOGO ===== */}
+        {/* Brand Logo */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
             <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Image className="w-5 h-5 text-cyan-400" />
+                Brand Logo (Optional)
+              </CardTitle>
               <CardTitle className="text-white">Brand Logo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -545,6 +527,8 @@ function AIAssistant({ message, onClose }) {
                   <div className="relative">
                     <img
                       src={settings.logo_url}
+                      alt="Logo preview"
+                      className={`w-16 h-16 object-contain border-2 border-white/20 bg-white/10 ${settings.logo_circle_crop ? 'rounded-full' : 'rounded-lg'}`}
                       alt="Logo"
                       className={`object-contain border-2 border-white/20 bg-white/10 ${settings.logo_circle_crop ? 'rounded-full' : 'rounded-lg'}`}
                       style={{ width: `${settings.logo_size}px`, height: `${settings.logo_size}px` }}
@@ -553,34 +537,25 @@ function AIAssistant({ message, onClose }) {
                       variant="ghost"
                       size="icon"
                       onClick={handleRemoveLogo}
+                      className="absolute -top-2 -right-2 h-6 w-6 bg-black/80 text-white rounded-full hover:bg-black hover:text-white"
+                      aria-label="Remove logo"
                       className="absolute -top-2 -right-2 h-6 w-6 bg-black/80 text-white rounded-full hover:bg-black"
                     >
                       <X className="w-4 h-4" />
                     </Button>
-                  </div>
-                )}
-                <div className="flex-1">
-                  <Label htmlFor="logo-upload" className="cursor-pointer">
-                    <div className="border-2 border-dashed border-white/30 rounded-xl p-4 text-center hover:border-cyan-400 hover:bg-cyan-400/10 transition-colors">
-                      <Upload className="w-6 h-6 mx-auto mb-2 text-gray-400" />
-                      <p className="text-sm text-gray-300">
-                        {isUploading ? "Uploading..." : settings.logo_url ? "Upload New Logo" : "Upload Logo"}
-                      </p>
-                    </div>
-                  </Label>
-                  <input
-                    id="logo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    className="hidden"
-                    disabled={isUploading}
-                  />
+@@ -170,102 +559,321 @@ export default function Settings() {
                 </div>
               </div>
-              
+
+              {settings.logo_url && (
               {!settings.logo_url && (
                 <div className="text-center">
+                  <button
+                    onClick={() => setSettings(prev => ({ ...prev, logo_circle_crop: !prev.logo_circle_crop }))}
+                    className="text-cyan-400 hover:text-cyan-300 text-sm underline"
+                  >
+                    {settings.logo_circle_crop ? "Uncrop" : "Circle Crop"}
+                  </button>
                   <a href="https://logosnap.ai" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 text-sm underline">
                     Need a logo? Try LogoSnap AI →
                   </a>
@@ -616,13 +591,20 @@ function AIAssistant({ message, onClose }) {
           </Card>
         </motion.div>
 
-        {/* ===== SECTION 2: BRAND TEXT ===== */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+        {/* Brand Text */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
             <CardHeader>
               <CardTitle className="text-white">Brand Text</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="space-y-2">
+                <Label htmlFor="brand-text" className="text-blue-200">What text would you like to display on your images?</Label>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-blue-200">Text on Images</Label>
@@ -645,7 +627,7 @@ function AIAssistant({ message, onClose }) {
                       style={{ fontFamily: settings.font_family }}
                     >
                       {GOOGLE_FONTS.map(font => (
-                        <option key={font} value={font} style={{ fontFamily: font }}>
+                      <option key={font} value={font} style={{ fontFamily: font }}>
                           {font}
                         </option>
                       ))}
@@ -734,7 +716,7 @@ function AIAssistant({ message, onClose }) {
           </Card>
         </motion.div>
 
-        {/* ===== SECTION 3: BRAND SOCIALS ===== */}
+        {/* Brand Socials */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
           <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
             <CardHeader>
@@ -743,14 +725,21 @@ function AIAssistant({ message, onClose }) {
             </CardHeader>
             <CardContent className="space-y-4">
               
+              {/* Search & Add Platform */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
+                  id="brand-text"
+                  placeholder="e.g., YourBrand.com or @YourHandle"
+                  value={settings.brand_text}
+                  onChange={(e) => setSettings(prev => ({ ...prev, brand_text: e.target.value }))}
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
                   placeholder="Search platforms..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
                 />
+                <p className="text-xs text-gray-400">Appears on your images. Use for your business name, website, social media handle, or slogan.</p>
               </div>
 
               {searchTerm && (
@@ -773,6 +762,7 @@ function AIAssistant({ message, onClose }) {
                 </div>
               )}
 
+              {/* Selected Platforms - Drag & Drop List */}
               {settings.social_platforms.length > 0 && (
                 <div className="space-y-2">
                   <Label className="text-blue-200">Your Social Platforms ({settings.social_platforms.length})</Label>
@@ -821,19 +811,39 @@ function AIAssistant({ message, onClose }) {
           </Card>
         </motion.div>
 
-        {/* ===== SECTION 4: QR CODE ===== */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+        {/* QR Code */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
             <CardHeader>
+              <CardTitle className="text-white">Invisible Metadata</CardTitle>
+              <p className="text-sm text-blue-200">Embed copyright information directly into your images</p>
               <CardTitle className="text-white">QR Code</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {settings.metadata_fields && Object.entries(settings.metadata_fields).map(([field, value]) => (
+                <div key={field} className="space-y-2">
+                  <Label className="text-blue-200 capitalize">{field.replace('_', ' ')}</Label>
+                  <Input
+                    placeholder={`Enter ${field.replace('_', ' ')} (optional)`}
+                    value={value}
+                    onChange={(e) => updateMetadataField(field, e.target.value)}
+                    className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
+                  />
+                </div>
+              ))}
               <div className="flex items-center justify-between py-2 border-b border-white/10">
                 <Label className="text-blue-200">Enable QR Code</Label>
                 <Switch
                   checked={settings.qr_enabled}
                   onCheckedChange={(checked) => setSettings(prev => ({ ...prev, qr_enabled: checked }))}
-                  style={{ backgroundColor: settings.qr_enabled ? '#60a5fa' : undefined }}
+                  style={{
+                    backgroundColor: settings.qr_enabled ? '#60a5fa' : undefined
+                  }}
                 />
               </div>
 
@@ -862,23 +872,32 @@ function AIAssistant({ message, onClose }) {
           </Card>
         </motion.div>
 
-        {/* ===== SECTION 5: WATERMARK POSITIONING ===== */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+        {/* Watermark Positioning */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
           <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
             <CardHeader>
               <CardTitle className="text-white">Watermark Positioning</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
               <div className="flex items-center justify-between py-2 border-b border-white/10">
                 <div>
+                  <Label className="text-base font-medium text-white">Position</Label>
                   <Label className="text-base font-medium text-white">Position Side</Label>
                   <p className="text-sm text-blue-200">Choose bottom-left or bottom-right</p>
                 </div>
                 <div className="flex bg-slate-800 rounded-lg p-1">
                   <button
                     onClick={() => setSettings(prev => ({ ...prev, logo_position: "left" }))}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                       settings.logo_position === "left"
+                        ? "bg-blue-600 text-white"
                         ? "bg-blue-900 text-white"
                         : "text-gray-300 hover:text-white"
                     }`}
@@ -887,17 +906,19 @@ function AIAssistant({ message, onClose }) {
                   </button>
                   <button
                     onClick={() => setSettings(prev => ({ ...prev, logo_position: "right" }))}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                     className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
                       settings.logo_position === "right"
+                        ? "bg-blue-600 text-white"
                         ? "bg-blue-900 text-white"
                         : "text-gray-300 hover:text-white"
                     }`}
                   >
-                    Right
-                  </button>
+@@ -274,37 +882,167 @@ export default function Settings() {
                 </div>
               </div>
 
+              <div className="flex items-center justify-between">
               <div className="space-y-2">
                 <Label className="text-blue-200">Opacity: {settings.opacity}%</Label>
                 <input
@@ -919,7 +940,9 @@ function AIAssistant({ message, onClose }) {
                 <Switch
                   checked={settings.drop_shadow}
                   onCheckedChange={(checked) => setSettings(prev => ({ ...prev, drop_shadow: checked }))}
-                  style={{ backgroundColor: settings.drop_shadow ? '#60a5fa' : undefined }}
+                  style={{
+                    backgroundColor: settings.drop_shadow ? '#60a5fa' : undefined
+                  }}
                 />
               </div>
 
@@ -930,18 +953,29 @@ function AIAssistant({ message, onClose }) {
                 </div>
                 <Switch
                   checked={settings.social_media_mode}
+                  onCheckedChange={(checked) => 
+                    setSettings(prev => ({ ...prev, social_media_mode: checked }))
+                  }
                   onCheckedChange={(checked) => {
                     setSettings(prev => ({ ...prev, social_media_mode: checked }));
                     if (checked) checkSpaceWarning(settings.social_platforms);
                   }}
-                  style={{ backgroundColor: settings.social_media_mode ? '#60a5fa' : undefined }}
+                  style={{
+                    backgroundColor: settings.social_media_mode ? '#60a5fa' : undefined
+                  }}
                 />
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* ===== SECTION 6: EXPORT OPTIONS ===== */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="pt-4"
+        >
+        {/* Export Options */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
           <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
             <CardHeader>
@@ -951,19 +985,21 @@ function AIAssistant({ message, onClose }) {
               <div className="flex items-center justify-between py-2 border-b border-white/10">
                 <div>
                   <Label className="text-base font-medium text-white">Generate Shareable Landing Page</Label>
-                  <p className="text-sm text-blue-200">Create clickable social icons that drive traffic to your profiles</p>
+                  <p className="text-sm text-blue-200">Create clickable social icons that drive traffic</p>
                 </div>
                 <Switch
                   checked={settings.generate_landing_page}
                   onCheckedChange={(checked) => setSettings(prev => ({ ...prev, generate_landing_page: checked }))}
-                  style={{ backgroundColor: settings.generate_landing_page ? '#60a5fa' : undefined }}
+                  style={{
+                    backgroundColor: settings.generate_landing_page ? '#60a5fa' : undefined
+                  }}
                 />
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* ===== SECTION 7: IMAGE METADATA (SEO) ===== */}
+        {/* Image Metadata (SEO) */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
           <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
             <CardHeader>
@@ -1015,11 +1051,12 @@ function AIAssistant({ message, onClose }) {
           </Card>
         </motion.div>
 
-        {/* ===== SAVE BUTTON ===== */}
+        {/* Save Button */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
           <Button
             onClick={handleSave}
             disabled={isSaving}
+            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-semibold py-3 rounded-xl shadow-lg"
             className="w-full text-white font-semibold py-3 rounded-xl shadow-lg"
             style={{ background: 'linear-gradient(to right, #60a5fa 0%, #1e3a8a 100%)' }}
             size="lg"
@@ -1028,7 +1065,7 @@ function AIAssistant({ message, onClose }) {
           </Button>
         </motion.div>
 
-        {/* ===== RESET TO DEFAULTS ===== */}
+        {/* Reset to Defaults */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85 }}>
           <Button
             onClick={() => {
@@ -1044,7 +1081,7 @@ function AIAssistant({ message, onClose }) {
           </Button>
         </motion.div>
 
-        {/* ===== PRIVACY MESSAGE ===== */}
+        {/* Privacy Message */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }}>
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
             <p className="text-sm text-blue-200 text-center">
@@ -1056,6 +1093,3 @@ function AIAssistant({ message, onClose }) {
       </div>
 
       <BottomNav />
-    </div>
-  );
-}
