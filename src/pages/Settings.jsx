@@ -200,50 +200,61 @@ export default function Settings() {
   };
 
   const extractColorsFromLogo = (imageUrl) => {
+    console.log("Starting color extraction for:", imageUrl);
     const img = new Image();
-    img.crossOrigin = "Anonymous";
+    if (!imageUrl.startsWith('data:')) {
+      img.crossOrigin = "Anonymous";
+    }
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
+      console.log("Image loaded successfully for color extraction");
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
 
-      const colors = [];
-      const positions = [
-        [10, 10],
-        [img.width - 10, 10],
-        [img.width / 2, img.height / 2],
-        [10, img.height - 10],
-        [img.width - 10, img.height - 10]
-      ];
+        const colors = [];
+        const positions = [
+          [10, 10],
+          [img.width - 10, 10],
+          [img.width / 2, img.height / 2],
+          [10, img.height - 10],
+          [img.width - 10, img.height - 10]
+        ];
 
-      positions.forEach(([x, y]) => {
-        try {
-          const pixel = ctx.getImageData(x, y, 1, 1).data;
-          const hex = `#${((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1)}`;
-          if (!colors.includes(hex)) colors.push(hex);
-        } catch (error) {
-          console.error("Error extracting color:", error);
+        positions.forEach(([x, y]) => {
+          try {
+            const pixel = ctx.getImageData(x, y, 1, 1).data;
+            const hex = `#${((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1)}`;
+            if (!colors.includes(hex)) colors.push(hex);
+          } catch (error) {
+            console.error("Error extracting color:", error);
+          }
+        });
+
+        console.log("Colors extracted:", colors);
+        setExtractedColors(colors.slice(0, 6));
+
+        if (settings.ai_auto_optimize) {
+          aiOptimize(img, ctx);
         }
-      });
-
-      setExtractedColors(colors.slice(0, 6));
-
-      if (settings.ai_auto_optimize) {
-        aiOptimize(img, ctx);
+      } catch (error) {
+        console.error("Error in color extraction process:", error);
       }
     };
-    img.onerror = () => {
-      console.error("Failed to load image for color extraction");
+    img.onerror = (e) => {
+      console.error("Failed to load image for color extraction:", e);
     };
     img.src = imageUrl;
   };
 
   const aiOptimize = (img, ctx) => {
     try {
+      console.log("Starting AI optimization");
       const centerPixel = ctx.getImageData(img.width / 2, img.height / 2, 1, 1).data;
       const r = centerPixel[0], g = centerPixel[1], b = centerPixel[2];
+      console.log("Center pixel RGB:", r, g, b);
 
       let suggestedFont = "";
       if (r > g && r > b) {
@@ -263,6 +274,7 @@ export default function Settings() {
       const complexity = 0.5;
       const suggestedOpacity = complexity > 0.7 ? 70 : complexity < 0.3 ? 95 : 85;
 
+      console.log("AI suggestions:", { suggestedFont, suggestedTextColor, suggestedOpacity });
       setSettings(prev => ({
         ...prev,
         font_family: suggestedFont,
@@ -282,7 +294,9 @@ export default function Settings() {
 
     setIsUploading(true);
     try {
+      console.log("Uploading file:", file.name);
       const { file_url } = await UploadFile({ file });
+      console.log("Upload successful, setting logo_url");
       setSettings(prev => ({ ...prev, logo_url: file_url }));
       extractColorsFromLogo(file_url);
     } catch (error) {
@@ -473,10 +487,7 @@ export default function Settings() {
         >
           <Card className="border-white/20 bg-white/10 backdrop-blur-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Image className="w-5 h-5 text-cyan-400" />
-                Brand Logo
-              </CardTitle>
+              <CardTitle className="text-white">Brand Logo</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-4">
