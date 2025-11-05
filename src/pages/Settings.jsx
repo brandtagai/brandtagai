@@ -590,7 +590,7 @@ export default function Settings() {
                 <Label htmlFor="brand-text" className="text-blue-200">Text on Images</Label>
                 <Input
                   id="brand-text"
-                  placeholder="Business name, website, social media handle or slogan"
+                  placeholder="Business name, website or slogan"
                   value={settings.brand_text}
                   onChange={(e) => setSettings(prev => ({ ...prev, brand_text: e.target.value }))}
                   className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 focus:border-cyan-400"
