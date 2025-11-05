@@ -1023,7 +1023,7 @@ export default function Settings() {
                   <Label className="text-blue-200 capitalize">{field.replace('_', ' ')}</Label>
                   <Input
                     id={`metadata-${field}`}
-                    placeholder={`Enter ${field.replace('_', ' ')} (optional)`}
+                    placeholder={`Enter ${field.replace('_', ' ')}`}
                     value={value}
                     onChange={(e) => updateMetadataField(field, e.target.value)}
                     onFocus={() => {
