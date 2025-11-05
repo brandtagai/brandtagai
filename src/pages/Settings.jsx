@@ -533,7 +533,7 @@ export default function Settings() {
               {!settings.logo_url && (
                 <div className="text-center">
                   <a
-                    href="https://socialmediatools.org/app/logo-snap-ai"
+                    href="https://epiphanyapps.io/app/logo-snap-ai"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-cyan-400 hover:text-cyan-300 text-sm underline"
